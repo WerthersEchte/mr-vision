@@ -105,10 +105,6 @@ int main(int argc, char *argv[])
 
     err=dc1394_feature_set_mode(camera1, DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_AUTO);
     std::cout << "WB: " << err << std::endl;
-    err=dc1394_feature_set_mode(camera1, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
-    std::cout << "WB: " << err << std::endl;
-    err=dc1394_feature_set_mode(camera1, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
-    std::cout << "WB: " << err << std::endl;
     /*-----------------------------------------------------------------------
      *  have the camera start sending us data
      *-----------------------------------------------------------------------*/

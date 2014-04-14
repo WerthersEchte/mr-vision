@@ -32,6 +32,6 @@ QT5_WRAP_UI( UI_HEADERS
 )
 
 add_executable( mrVision ${SOURCE} ${HEADERS} ${UI_HEADERS} ${UI_FILES})
-target_link_libraries( mrVision ${OpenCV_LIBS} /usr/lib/i386-linux-gnu/libdc1394.so )
+target_link_libraries( mrVision ${OpenCV_LIBS} /usr/lib/i386-linux-gnu )
 
 qt5_use_modules( mrVision Widgets Core Gui)
