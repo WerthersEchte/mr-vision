@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include <iostream>
 #include "opencv2/opencv.hpp"
+#include <time.h>
 
 using namespace cv;
 
@@ -64,13 +65,17 @@ int main(int argc, char *argv[])
     err=dc1394_video_set_mode(camera, DC1394_VIDEO_MODE_800x600_MONO8);
     DC1394_ERR_CLN_RTN(err,cleanup_and_exit(camera),"Could not set video mode\n");
 
-    err=dc1394_video_set_framerate(camera, DC1394_FRAMERATE_7_5);
+    err=dc1394_video_set_framerate(camera, DC1394_FRAMERATE_30);
     DC1394_ERR_CLN_RTN(err,cleanup_and_exit(camera),"Could not set framerate\n");
 
     err=dc1394_capture_setup(camera,4, DC1394_CAPTURE_FLAGS_DEFAULT);
     DC1394_ERR_CLN_RTN(err,cleanup_and_exit(camera),"Could not setup camera-\nmake sure that the video mode and framerate are\nsupported by your camera\n");
 
     err=dc1394_feature_set_mode(camera, DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_AUTO);
+    std::cout << "WB: " << err << std::endl;
+    err=dc1394_feature_set_mode(camera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
+    std::cout << "WB: " << err << std::endl;
+    err=dc1394_feature_set_mode(camera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
     std::cout << "WB: " << err << std::endl;
     /*-----------------------------------------------------------------------
      *  have the camera start sending us data
@@ -97,7 +102,7 @@ int main(int argc, char *argv[])
     err=dc1394_video_set_mode(camera1, DC1394_VIDEO_MODE_800x600_MONO8);
     DC1394_ERR_CLN_RTN(err,cleanup_and_exit(camera1),"Could not set video mode\n");
 
-    err=dc1394_video_set_framerate(camera1, DC1394_FRAMERATE_7_5);
+    err=dc1394_video_set_framerate(camera1, DC1394_FRAMERATE_30);
     DC1394_ERR_CLN_RTN(err,cleanup_and_exit(camera1),"Could not set framerate\n");
 
     err=dc1394_capture_setup(camera1,4, DC1394_CAPTURE_FLAGS_DEFAULT);
@@ -124,29 +129,34 @@ int main(int argc, char *argv[])
     Mat edges, edges1, frame1, frame2, frame3;
     namedWindow("edges",1);
     namedWindow("edges1",1);
+    namedWindow("edges2",1);
+
+    dc1394_get_image_size_from_video_mode(camera, DC1394_VIDEO_MODE_800x600_MONO8, &width, &height);
+
+    cv::Mat all( height * 2, width, CV_8UC1);
+    cv::Mat half1(all, cv::Rect(0, 0, width, height));
+    cv::Mat half(all, cv::Rect( 0, height, width, height));
 
     for(;;) 
     {
 
+	timespec tb, ta;
+	clock_gettime(CLOCK_REALTIME, &tb);
+
         err=dc1394_capture_dequeue(camera, DC1394_CAPTURE_POLICY_WAIT, &frame);
-	std::cout << "Capture: " << err << std::endl;
-        dc1394_get_image_size_from_video_mode(camera, DC1394_VIDEO_MODE_800x600_MONO8, &width, &height);
         frame1 = cv::Mat( height, width, CV_8UC1, frame->image);
 	err = dc1394_capture_enqueue( camera, frame);
-	std::cout << "Release: " << err << std::endl;
-        imshow("edges", frame1);
-
 	err=dc1394_capture_dequeue(camera1, DC1394_CAPTURE_POLICY_WAIT, &frame);
-	std::cout << "Capture: " << err << std::endl;
-        dc1394_get_image_size_from_video_mode(camera1, DC1394_VIDEO_MODE_800x600_MONO8, &width, &height);
         frame2 = cv::Mat( height, width, CV_8UC1, frame->image);
 	err = dc1394_capture_enqueue( camera1, frame);
-	std::cout << "Release: " << err << std::endl;
-        imshow("edges1", frame2);
 
-	vector<Mat> imgs;
-	imgs.push_back(frame1);
-	imgs.push_back(frame2);
+    	frame1.copyTo(half1);
+	frame2.copyTo(half);
+	clock_gettime(CLOCK_REALTIME, &ta);
+	unsigned long elapsed_time = ta.tv_nsec - tb.tv_nsec ;
+	std::cout << (double) elapsed_time/1000000 << std::endl;
+
+	imshow("edges2", all);
 
         if(waitKey(30) >= 0) break;
 
