@@ -4,10 +4,22 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <iostream>
+#include <string>
 #include "opencv2/opencv.hpp"
 #include <time.h>
+#include <math.h>
+#include <map>
+#include "bot.h"
+
+#include <aruco/aruco.h>
+#include <aruco/cvdrawingutils.h>
+
+#include "markerlist.h"
+#include "udp_server.h"
 
 using namespace cv;
+
+#define PI 3.14159265
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -26,12 +38,43 @@ void cleanup_and_exit(dc1394camera_t *camera)
     exit(1);
 }
 
+mrvision::MarkerList vMarkerList;
+
+int derDetector( const cv::Mat &in,int &nRotations ){
+    Mat vBWMarker = in > 128;
+    Mat vPart;
+	nRotations = 0;
+    int width=vBWMarker.size().width / 5,
+    	height=vBWMarker.size().height / 5;
+    std::vector<bool> vMarker;
+    for( int i = 1; i < 4; i++){
+    	for( int j = 1; j < 4; j++){
+    		    		vPart = cv::Mat(vBWMarker, cv::Rect( j * width, i * height, width, height));
+    		vMarker.push_back( countNonZero(vPart)>width*height/2 );
+    	}
+    }
+
+
+
+    for( mrvision::Marker vTest : vMarkerList.getMarker() ){
+		if( vTest.compareTo( vMarker, nRotations ) ){
+			return vTest.getId();
+		}
+    }
+
+    return -1;
+}
+
+
 int main(int argc, char *argv[])
 {
+	mrvision::UDPServer vServer( 9050 );
+	vServer.start();
+
     FILE* imagefile;
     dc1394camera_t *camera, *camera1;
     unsigned int width, height;
-    dc1394video_frame_t *frame=NULL;
+    dc1394video_frame_t *frame=NULL, *frame22=NULL;
     //dc1394featureset_t features;
     dc1394_t * d;
     dc1394camera_list_t * list;
@@ -127,38 +170,100 @@ int main(int argc, char *argv[])
 //    DC1394_ERR_CLN_RTN(err,cleanup_and_exit(camera),"Could not capture a frame\n");
 
     Mat edges, edges1, frame1, frame2, frame3;
-    namedWindow("edges",1);
-    namedWindow("edges1",1);
-    namedWindow("edges2",1);
+    namedWindow("CameraRechts",1);
 
     dc1394_get_image_size_from_video_mode(camera, DC1394_VIDEO_MODE_800x600_MONO8, &width, &height);
 
-    cv::Mat all( height * 2, width, CV_8UC1);
-    cv::Mat half1(all, cv::Rect(0, 0, width, height));
-    cv::Mat half(all, cv::Rect( 0, height, width, height));
+    cv::Mat all( height * 2, width * 2, CV_8UC1);
+    //cv::Mat half1(all, cv::Rect(0, 0, width, height));
+    //cv::Mat half(all, cv::Rect( 0, height, width, height));
+    
+    int k = 11,it;
+    std::cout << "farts" << std::endl;
+    aruco::CameraParameters CamRechtsParam, CamLinksParam;
+    aruco::MarkerDetector MDetector;
+    MDetector.setMinMaxSize(0.000000001);
+    MDetector.setMakerDetectorFunction(&derDetector);
+    vector<aruco::Marker> Markers;
+    std::cout << MDetector.getWarpSize() << std::endl;
+    CamRechtsParam.readFromXMLFile(argv[1]);
+    CamLinksParam.readFromXMLFile(argv[2]);
+    float MarkerSize=atof(argv[3]);
+    std::cout << MarkerSize << std::endl;
+
+    std::map<int, mrvision::Bot> vBots;
 
     for(;;) 
     {
+    		vBots.clear();
+            err=dc1394_capture_dequeue(camera, DC1394_CAPTURE_POLICY_WAIT, &frame);
+            frame1 = cv::Mat( height, width, CV_8UC1, frame->image);
+            err = dc1394_capture_enqueue( camera, frame);
+            err=dc1394_capture_dequeue(camera1, DC1394_CAPTURE_POLICY_WAIT, &frame22);
+            frame2 = cv::Mat( height, width, CV_8UC1, frame22->image);
 
-	timespec tb, ta;
-	clock_gettime(CLOCK_REALTIME, &tb);
+            all = frame1 > 90;
 
-        err=dc1394_capture_dequeue(camera, DC1394_CAPTURE_POLICY_WAIT, &frame);
-        frame1 = cv::Mat( height, width, CV_8UC1, frame->image);
-	err = dc1394_capture_enqueue( camera, frame);
-	err=dc1394_capture_dequeue(camera1, DC1394_CAPTURE_POLICY_WAIT, &frame);
-        frame2 = cv::Mat( height, width, CV_8UC1, frame->image);
-	err = dc1394_capture_enqueue( camera1, frame);
+            CamRechtsParam.resize( all.size() );
+            MDetector.detect(all,Markers,CamRechtsParam,MarkerSize);
 
-    	frame1.copyTo(half1);
-	frame2.copyTo(half);
-	clock_gettime(CLOCK_REALTIME, &ta);
-	unsigned long elapsed_time = ta.tv_nsec - tb.tv_nsec ;
-	std::cout << (double) elapsed_time/1000000 << std::endl;
+            for (unsigned int i=0;i<Markers.size();i++) {
+            	Point2f vPoint = Markers[i][1] - Markers[i][2];
 
-	imshow("edges2", all);
+                Markers[i].draw(frame1,Scalar(0,0,255),2, true);
+                cv::line( frame1,
+                		Markers[i].getCenter(),
+                		Markers[i].getCenter() + vPoint,
+                				Scalar(255,255,255), 2,CV_AA);
+            }
+            std::cout << std::endl << std::endl;
 
-        if(waitKey(30) >= 0) break;
+            for( aruco::Marker vMarker : Markers )
+            {
+            	Point2f vPoint = vMarker[1] - vMarker[2];
+            	vBots[vMarker.id] = mrvision::Bot(
+            			vMarker.id,
+            			( vMarker.getCenter().y - 50 ) / 850,
+            			( vMarker.getCenter().x - 100 ) / 600,
+            			atan2( vPoint.y, vPoint.x) * 180 / PI);
+            }
+
+    	    imshow("CameraRechts", frame1);
+
+    	    all = frame2 > 90;
+
+            CamLinksParam.resize( all.size() );
+            MDetector.detect(all,Markers,CamLinksParam,MarkerSize);
+
+            for (unsigned int i=0;i<Markers.size();i++) {
+            	Point2f vPoint = Markers[i][1] - Markers[i][2];
+
+                Markers[i].draw(frame2,Scalar(0,0,255),2, true);
+                cv::line( frame2,
+                		Markers[i].getCenter(),
+                		Markers[i].getCenter() + vPoint,
+                				Scalar(255,255,255), 2,CV_AA);
+            }
+
+            for( aruco::Marker vMarker : Markers )
+            {
+            	Point2f vPoint = vMarker[1] - vMarker[2];
+            	vBots[vMarker.id] = mrvision::Bot(
+            			vMarker.id,
+            			( vMarker.getCenter().y + 321 ) / 850,
+            			( vMarker.getCenter().x - 90 ) / 600,
+            			atan2( vPoint.y, vPoint.x) * 180 / PI);
+            }
+
+            vServer.send_Data( vBots );
+            std::cout << std::endl << std::endl;
+    	    imshow("CameraLinks", frame2);
+
+	    err = dc1394_capture_enqueue( camera, frame);
+	    err = dc1394_capture_enqueue( camera1, frame22);
+		if(waitKey(50) >= 0) {
+			break;
+		}
 
     }
 
@@ -182,7 +287,6 @@ int main(int argc, char *argv[])
     dc1394_free (d);
     return 0;
 }
-
 //#include <QApplication>
 //#include "gui/mainGUI.h"
 //
