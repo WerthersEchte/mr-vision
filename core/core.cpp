@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
     //cv::Mat half1(all, cv::Rect(0, 0, width, height));
     //cv::Mat half(all, cv::Rect( 0, height, width, height));
     
-    int k = 11,it;
+    int k = 11,it, offset=16, sosize=706;
     std::cout << "farts" << std::endl;
     aruco::CameraParameters CamRechtsParam, CamLinksParam;
     aruco::MarkerDetector MDetector;
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
             err=dc1394_capture_dequeue(camera1, DC1394_CAPTURE_POLICY_WAIT, &frame22);
             frame2 = cv::Mat( height, width, CV_8UC1, frame22->image);
 
-            all = frame1 > 90;
+            all = frame1 > 85;
 
             CamRechtsParam.resize( all.size() );
             MDetector.detect(all,Markers,CamRechtsParam,MarkerSize);
@@ -216,7 +216,6 @@ int main(int argc, char *argv[])
                 		Markers[i].getCenter() + vPoint,
                 				Scalar(255,255,255), 2,CV_AA);
             }
-            std::cout << std::endl << std::endl;
 
             for( aruco::Marker vMarker : Markers )
             {
@@ -224,13 +223,13 @@ int main(int argc, char *argv[])
             	vBots[vMarker.id] = mrvision::Bot(
             			vMarker.id,
             			( vMarker.getCenter().y - 50 ) / 850,
-            			( vMarker.getCenter().x - 100 ) / 600,
-            			atan2( vPoint.y, vPoint.x) * 180 / PI);
+            			( vMarker.getCenter().x - 10 - offset ) / sosize,
+            			atan2( vPoint.x, vPoint.y) * 180 / PI);
             }
 
     	    imshow("CameraRechts", frame1);
 
-    	    all = frame2 > 90;
+    	    all = frame2 > 85;
 
             CamLinksParam.resize( all.size() );
             MDetector.detect(all,Markers,CamLinksParam,MarkerSize);
@@ -251,19 +250,35 @@ int main(int argc, char *argv[])
             	vBots[vMarker.id] = mrvision::Bot(
             			vMarker.id,
             			( vMarker.getCenter().y + 321 ) / 850,
-            			( vMarker.getCenter().x - 90 ) / 600,
-            			atan2( vPoint.y, vPoint.x) * 180 / PI);
+            			( vMarker.getCenter().x - offset ) / sosize,
+            			atan2( vPoint.x, vPoint.y) * 180 / PI);
             }
 
             vServer.send_Data( vBots );
-            std::cout << std::endl << std::endl;
     	    imshow("CameraLinks", frame2);
 
 	    err = dc1394_capture_enqueue( camera, frame);
 	    err = dc1394_capture_enqueue( camera1, frame22);
-		if(waitKey(50) >= 0) {
-			break;
-		}
+
+	    it = waitKey(1);
+	    if( it == '8' ){
+
+	    	std::cout << ++offset << std::endl;
+
+	    } else if( it == '2' ){
+
+	    	std::cout << --offset << std::endl;
+
+	    } else if( it == '4' ){
+
+	    	std::cout << --sosize << std::endl;
+
+	    } else if( it == '6' ){
+
+	    	std::cout << ++sosize << std::endl;
+
+	    }
+
 
     }
 
