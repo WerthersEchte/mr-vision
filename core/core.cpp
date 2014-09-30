@@ -17,6 +17,9 @@
 #include "markerlist.h"
 #include "udp_server.h"
 
+#include <QApplication>
+#include "gui/mrvisiongui.h"
+
 using namespace cv;
 
 #define PI 3.14159265
@@ -68,8 +71,12 @@ int derDetector( const cv::Mat &in,int &nRotations ){
 
 int main(int argc, char *argv[])
 {
-	mrvision::UDPServer vServer( 9050 );
-	vServer.start();
+	//mrvision::UDPServer vServer( 9050 );
+	//vServer.start();
+
+    QApplication a(argc, argv);
+    mrvision::MRVisionGui w;
+    w.show();
 
     FILE* imagefile;
     dc1394camera_t *camera, *camera1;
@@ -254,7 +261,7 @@ int main(int argc, char *argv[])
             			atan2( vPoint.x, vPoint.y) * 180 / PI);
             }
 
-            vServer.send_Data( vBots );
+            //vServer.send_Data( vBots );
     	    imshow("CameraLinks", frame2);
 
 	    err = dc1394_capture_enqueue( camera, frame);
