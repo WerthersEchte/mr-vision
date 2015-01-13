@@ -1,8 +1,9 @@
-cmake_minimum_required (VERSION 2.8.9)
+cmake_minimum_required (VERSION 2.8.11)
+cmake_policy(SET CMP0043 NEW)
 
-set(CMAKE_PREFIX_PATH "/home/marvin/.Qt5.2.1/5.2.1/gcc/")
+set(MAIN_NAME visiongui)
 
-project ( mrVision CXX )
+project ( ${MAIN_NAME} CXX )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
@@ -10,8 +11,9 @@ set(CMAKE_AUTOMOC ON)
 find_package( Qt5Widgets REQUIRED )
 find_package( Qt5Core REQUIRED )
 find_package( Qt5Gui REQUIRED )
+find_package( Qt5Concurrent REQUIRED )
 
-find_package(aruco REQUIRED )
+find_package( aruco REQUIRED )
 
 find_package( OpenCV REQUIRED )
 FIND_PACKAGE( Boost COMPONENTS system regex REQUIRED )
@@ -20,40 +22,38 @@ include_directories( ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} )
 
 set( SOURCE
    ${SOURCE}
-   core/bot.cpp
-   core/core.cpp
-   core/udp_server.cpp
-   core/marker.cpp
-   core/markerlist.cpp
-   core/gui/mrvisiongui.cpp
+   src/main.cpp
+   src/gui/visiongui.cpp
+   src/gui/cameragui.cpp
+   src/core/bot.cpp
+   src/core/camera.cpp
+   src/core/marker.cpp
+   src/core/markerlist.cpp
+   src/core/udp_server.cpp
 )
 set( HEADERS
    ${HEADERS}
-   core/bot.h
-   core/marker.h
-   core/udp_server.h
-   core/markerlist.h
-   core/gui/mrvisiongui.h
+   src/gui/visiongui.h
+   src/gui/cameragui.h
+   src/core/bot.h
+   src/core/camera.h
+   src/core/marker.h
+   src/core/markerlist.h
+   src/core/udp_server.h
 )
 
 set( UI_FILES
    ${UI_FILES}
-   core/gui/mrvisiongui.ui
+   src/gui/ui/vision.ui
+   src/gui/ui/camera.ui
 )
 
 QT5_WRAP_UI( UI_HEADERS
    ${UI_FILES}
 )
 
-set( CXX_COMPILER_FLAGS
-"-std=c++0x"
-)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+add_executable( ${MAIN_NAME} WIN32 ${SOURCE} ${HEADERS} ${UI_HEADERS} ${UI_FILES} )
 
-SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_COMPILER_FLAGS}" )
-
-set( SEQAN_C++11_STANDARD ON)
-
-add_executable( mrVision ${SOURCE} ${HEADERS} ${UI_HEADERS} ${UI_FILES})
-qt5_use_modules( mrVision Widgets Core Gui )
-target_link_libraries( mrVision ${OpenCV_LIBS} ${aruco_LIBS} /usr/lib/i386-linux-gnu/libdc1394.so ${Boost_LIBRARIES} )
-
+qt5_use_modules( ${MAIN_NAME} Widgets Core Gui )
+target_link_libraries( ${MAIN_NAME} ${OpenCV_LIBS} ${aruco_LIBS} /usr/lib/x86_64-linux-gnu/libdc1394.so ${Boost_LIBRARIES} )
