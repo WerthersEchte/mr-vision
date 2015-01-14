@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QPixmap>
 #include "src/core/camera.h"
+#include "src/core/detector.h"
 
 namespace Ui {
 	class Camera;
@@ -17,13 +18,15 @@ class CameraGui : public QWidget
 
 	Ui::Camera *mUi;
 	Camera* mCamera;
+	Detector* mDetector;
 
-	bool mStreamIsRunning;
+	bool mDetectionIsRunning, mStreamIsRunning;
 
 public:
     explicit CameraGui( Camera *aCamera, QWidget *aParent = 0 );
     ~CameraGui();
 public slots:
+    void detectBots( bool aActivateDetection = false );
     void streamVideo( bool aActivateStream = false );
     void paintPicture(const QPixmap &aPicture);
 
@@ -32,6 +35,8 @@ signals:
 
 private:
     void streamLoop();
+    void detectionLoop();
+
 };
 
 }

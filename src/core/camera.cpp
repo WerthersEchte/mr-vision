@@ -1,10 +1,15 @@
 #include "camera.h"
 
+#include <QMutexLocker>
+#include <QtConcurrent/QtConcurrent>
+
 namespace mrvision {
 
 Camera::Camera( dc1394camera_t *aCamera ) :
         mCamera(aCamera),
-        mLastVideoframe(nullptr)
+        mLastVideoframe(nullptr),
+        mCurrentPicture(nullptr),
+        mIsFetchingPictures(false)
 {
 
     if( !aCamera ){
@@ -36,7 +41,9 @@ Camera::Camera( dc1394camera_t *aCamera ) :
 Camera::~Camera(){
 
     if( isValid() ){
-
+        while( mCurrentPicture ){
+            mIsFetchingPictures = false;
+        }
         dc1394_video_set_transmission(mCamera, DC1394_OFF);
         dc1394_capture_stop(mCamera);
         dc1394_camera_free(mCamera);
@@ -47,18 +54,18 @@ Camera::~Camera(){
 
 cv::Mat* Camera::getVideoFrame(){
 
-    cv::Mat* vCurrentFrame = nullptr;
+    if( isValid() && !mCurrentPicture ){
 
-    if( isValid() ){
-
-        //TODO: Errorchecks
         dc1394_capture_dequeue(mCamera, DC1394_CAPTURE_POLICY_WAIT, &mLastVideoframe);
-        vCurrentFrame = new cv::Mat( mCameraImageHeight, mCameraImageWidth, CV_8UC1, mLastVideoframe->image );
+        mCurrentPicture = new cv::Mat( mCameraImageHeight, mCameraImageWidth, CV_8UC1, mLastVideoframe->image );
         dc1394_capture_enqueue( mCamera, mLastVideoframe);
+
+        mIsFetchingPictures = true;
+        QtConcurrent::run(this, &Camera::getPictureLoop);
 
     }
 
-    return vCurrentFrame;
+    return mCurrentPicture;
 
 }
 
@@ -110,6 +117,24 @@ QList<Camera*> Camera::findCameras(){
     dc1394_camera_free_list (list);
 
     return vCameraList;
+
+}
+
+void Camera::getPictureLoop(){
+
+    QMutexLocker vLocker(&mMutex);
+
+    while( mIsFetchingPictures ){
+
+        dc1394_capture_dequeue(mCamera, DC1394_CAPTURE_POLICY_WAIT, &mLastVideoframe);
+        vLocker.relock();
+        mCurrentPicture = new cv::Mat( mCameraImageHeight, mCameraImageWidth, CV_8UC1, mLastVideoframe->image );
+        vLocker.unlock();
+        dc1394_capture_enqueue( mCamera, mLastVideoframe);
+
+    }
+    vLocker.relock();
+    mCurrentPicture = nullptr;
 
 }
 

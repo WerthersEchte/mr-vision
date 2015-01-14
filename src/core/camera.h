@@ -5,14 +5,21 @@
 #include <QList>
 #include "opencv2/opencv.hpp"
 
+#include <QMutex>
+
 namespace mrvision {
 
 class Camera{
+
+    mutable QMutex mMutex;
 
     dc1394camera_t *mCamera;
     dc1394video_frame_t *mLastVideoframe;
 
     unsigned int mCameraImageHeight, mCameraImageWidth;
+
+    cv::Mat* mCurrentPicture;
+    bool mIsFetchingPictures;
 
 public:
     Camera( int aId );
@@ -26,7 +33,10 @@ public:
     uint64_t getId();
 
     static QList<Camera*> findCameras();
+
 private:
+
+    void getPictureLoop();
 
 };
 

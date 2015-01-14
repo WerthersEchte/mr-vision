@@ -1,9 +1,13 @@
 #include "cameragui.h"
 #include "ui_camera.h"
 
+#include "src/core/detectorsimple.h"
+
 #include <QThread>
 #include <QtConcurrent/QtConcurrent>
 #include <QPainter>
+
+#include <iostream>
 
 namespace mrvision {
 
@@ -11,20 +15,38 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     QWidget(aParent),
     mUi(new Ui::Camera),
     mCamera(aCamera),
-    mStreamIsRunning(false)
+    mDetectionIsRunning(false),
+    mStreamIsRunning(false),
+    mDetector(new DetectorSimple( "cameralinks.yml" ))
 {
     mUi->setupUi(this);
+    connect( mUi->cBActive, SIGNAL( clicked( bool ) ), this, SLOT( detectBots( bool ) ) );
     connect( mUi->grpBCameraStream, SIGNAL( clicked( bool ) ), this, SLOT( streamVideo( bool ) ) );
     connect( this, SIGNAL( newPicture( QPixmap ) ), this, SLOT( paintPicture( QPixmap ) ) );
+
+    mDetector->setMarkerList( new MarkerList() );
+
+    mUi->lblName->setText( QString::number( mCamera->getId() ) );
 }
 
 CameraGui::~CameraGui() {
 
-    while( mStreamIsRunning ){
+    while( mStreamIsRunning || mDetectionIsRunning ){
+        mUi->cBActive->setChecked( false );
         mUi->grpBCameraStream->setChecked( false );
     }
     delete mUi;
     delete mCamera;
+}
+
+void CameraGui::detectBots( bool aActivateDetection ){
+
+    if( aActivateDetection && !mDetectionIsRunning ){
+
+        QtConcurrent::run(this, &CameraGui::detectionLoop);
+
+    }
+
 }
 
 void CameraGui::streamVideo( bool aActivateStream ){
@@ -43,6 +65,23 @@ void CameraGui::paintPicture(const QPixmap &aPicture){
 
 }
 
+void CameraGui::detectionLoop(){
+
+    std::vector<aruco::Marker>* vFoundMarkers;
+
+    mDetectionIsRunning = true;
+    while( mUi->cBActive->isChecked() ){
+
+        vFoundMarkers = mDetector->detectMarkers( *mCamera->getVideoFrame() );
+
+        foreach( aruco::Marker vMarker, *vFoundMarkers ){
+            std::cout << vMarker.id << std::endl ;
+        }
+
+    }
+    mDetectionIsRunning = false;
+}
+
 void CameraGui::streamLoop(){
 
     const uchar *qImageBuffer;
@@ -56,7 +95,7 @@ void CameraGui::streamLoop(){
         vColorTable.push_back(qRgb(i,i,i));
     }
     mStreamIsRunning = true;
-    while( mUi->grpBCameraStream->isChecked()){
+    while( mUi->grpBCameraStream->isChecked() ){
 
         // Copy input Mat
         mat = mCamera->getVideoFrame();
@@ -73,11 +112,7 @@ void CameraGui::streamLoop(){
             painter.setPen(LinePenRed);
 
             for( int i = 10; i < vPixmap.height(); i = i + 10){
-                if( !(i%50) ){
-                    painter.setPen(LinePenGreen);
-                    painter.drawLine(0,i,vPixmap.width(),i);
-                    painter.setPen(LinePenRed);
-                } else {
+                if( (i%50) ){
                     painter.drawLine(0,i,vPixmap.width(),i);
                 }
             }
@@ -89,6 +124,10 @@ void CameraGui::streamLoop(){
                 } else {
                     painter.drawLine(i,0,i,vPixmap.height());
                 }
+            }
+            painter.setPen(LinePenGreen);
+            for( int i = 50; i < vPixmap.height(); i = i + 50){
+                painter.drawLine(0,i,vPixmap.width(),i);
             }
 
             painter.end();
