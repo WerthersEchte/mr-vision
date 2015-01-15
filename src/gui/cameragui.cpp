@@ -15,14 +15,15 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     QWidget(aParent),
     mUi(new Ui::Camera),
     mCamera(aCamera),
-    mDetectionIsRunning(false),
-    mStreamIsRunning(false),
     mDetector(new DetectorSimple( "cameralinks.yml" ))
 {
     mUi->setupUi(this);
     connect( mUi->cBActive, SIGNAL( clicked( bool ) ), this, SLOT( detectBots( bool ) ) );
-    connect( mUi->grpBCameraStream, SIGNAL( clicked( bool ) ), this, SLOT( streamVideo( bool ) ) );
+    connect( mUi->grpBCameraStream, SIGNAL( clicked( bool ) ), this, SLOT( startStreamingVideo( bool ) ) );
     connect( this, SIGNAL( newPicture( QPixmap ) ), this, SLOT( paintPicture( QPixmap ) ) );
+
+    qRegisterMetaType< std::vector<aruco::Marker> >("std::vector<aruco::Marker>");
+    connect( mDetector, SIGNAL( markersDetected( std::vector<aruco::Marker> ) ), this, SLOT( testMarkerDetection( std::vector<aruco::Marker> ) ) );
 
     mDetector->setMarkerList( new MarkerList() );
 
@@ -31,85 +32,86 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
 
 CameraGui::~CameraGui() {
 
-    while( mStreamIsRunning || mDetectionIsRunning ){
-        mUi->cBActive->setChecked( false );
-        mUi->grpBCameraStream->setChecked( false );
-    }
     delete mUi;
     delete mCamera;
+    delete mDetector;
+
 }
 
 void CameraGui::detectBots( bool aActivateDetection ){
 
-    if( aActivateDetection && !mDetectionIsRunning ){
+    if( aActivateDetection ){
 
-        QtConcurrent::run(this, &CameraGui::detectionLoop);
+        qRegisterMetaType< cv::Mat >("cv::Mat");
+        connect( mCamera, SIGNAL( newVideoFrame( cv::Mat ) ), mDetector, SLOT( detectMarkers( cv::Mat ) ) );
 
-    }
+    } else {
 
-}
-
-void CameraGui::streamVideo( bool aActivateStream ){
-
-    if( aActivateStream && !mStreamIsRunning ){
-
-        QtConcurrent::run(this, &CameraGui::streamLoop);
+        disconnect( mCamera, &Camera::newVideoFrame, mDetector, &Detector::detectMarkers );
 
     }
 
 }
 
-void CameraGui::paintPicture(const QPixmap &aPicture){
+void CameraGui::testMarkerDetection( std::vector<aruco::Marker> aListOfMarkers ){
 
-    mUi->lblVideoStream->setPixmap(aPicture);
+    foreach( aruco::Marker vMarker, aListOfMarkers ){
+        std::cout << vMarker.id << std::endl ;
+    }
 
 }
 
-void CameraGui::detectionLoop(){
+void CameraGui::startStreamingVideo( bool aStreaming ){
 
-    std::vector<aruco::Marker>* vFoundMarkers;
+    if( aStreaming ){
 
-    mDetectionIsRunning = true;
-    while( mUi->cBActive->isChecked() ){
+        qRegisterMetaType< cv::Mat >("cv::Mat");
+        connect( mCamera, SIGNAL( newVideoFrame( cv::Mat ) ), this, SLOT( streamVideo( cv::Mat ) ) );
 
-        vFoundMarkers = mDetector->detectMarkers( *mCamera->getVideoFrame() );
+        if( !mCamera->isRunning() ){
 
-        foreach( aruco::Marker vMarker, *vFoundMarkers ){
-            std::cout << vMarker.id << std::endl ;
+            mCamera->startVideoCapture();
         }
 
+    } else {
+
+        disconnect( mCamera, &Camera::newVideoFrame, this, &CameraGui::streamVideo );
+
     }
-    mDetectionIsRunning = false;
+
 }
 
-void CameraGui::streamLoop(){
 
-    const uchar *qImageBuffer;
-    cv::Mat *mat;
-    QPixmap vPixmap;
+void CameraGui::streamVideo( const cv::Mat& aVideoFrame ){
 
-    QPen LinePenRed(Qt::red,1), LinePenGreen(Qt::green,1);
+    QtConcurrent::run(this, &CameraGui::createPictureFromVideoframe, aVideoFrame);
 
-    QVector<QRgb> vColorTable;
-    for (int i=0; i<256; i++){
-        vColorTable.push_back(qRgb(i,i,i));
-    }
-    mStreamIsRunning = true;
-    while( mUi->grpBCameraStream->isChecked() ){
+}
+
+void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
+
+    if( mUi->grpBCameraStream->isChecked() ){
+
+        QPixmap vPixmap;
+
+        QPen LinePenRed(Qt::red,1), LinePenGreen(Qt::green,1);
+
+        QVector<QRgb> vColorTable;
+        for (int i=0; i<256; i++){
+            vColorTable.push_back(qRgb(i,i,i));
+        }
 
         // Copy input Mat
-        mat = mCamera->getVideoFrame();
-        qImageBuffer = (const uchar*)mat->data;
         // Create QImage with same dimensions as input Mat
-        QImage img(qImageBuffer, mat->cols, mat->rows, mat->step, QImage::Format_Indexed8);
+        QImage img((const uchar*)aVideoFrame.data, aVideoFrame.cols, aVideoFrame.rows, aVideoFrame.step, QImage::Format_Indexed8);
         img.setColorTable(vColorTable);
 
-        vPixmap = QPixmap::fromImage(img);
+        vPixmap = QPixmap::fromImage( img );
 
         if( mUi->cBGridlines->isChecked() ){
 
-            QPainter painter(&vPixmap);
-            painter.setPen(LinePenRed);
+            QPainter painter( &vPixmap );
+            painter.setPen( LinePenRed );
 
             for( int i = 10; i < vPixmap.height(); i = i + 10){
                 if( (i%50) ){
@@ -125,7 +127,7 @@ void CameraGui::streamLoop(){
                     painter.drawLine(i,0,i,vPixmap.height());
                 }
             }
-            painter.setPen(LinePenGreen);
+            painter.setPen( LinePenGreen );
             for( int i = 50; i < vPixmap.height(); i = i + 50){
                 painter.drawLine(0,i,vPixmap.width(),i);
             }
@@ -138,7 +140,12 @@ void CameraGui::streamLoop(){
 
     }
 
-    mStreamIsRunning = false;
+}
+
+void CameraGui::paintPicture(const QPixmap &aPicture){
+
+    mUi->lblVideoStream->setPixmap(aPicture);
+
 }
 
 }

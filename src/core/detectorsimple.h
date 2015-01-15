@@ -23,12 +23,12 @@ public:
     virtual ~DetectorSimple();
 
     virtual void setMarkerList( MarkerList* aMarkerList );
-    virtual std::vector<aruco::Marker>* detectMarkers( const cv::Mat& aImage );
 
-    void setThreshold( int aThreshold );
+public slots:
+    virtual void detectMarkers( const cv::Mat& aImage );
 
 private:
-
+    void detectingMarkerInImage( const cv::Mat& aImage );
     static int identifyMarker( const cv::Mat &in,int &nRotations );
 
 };

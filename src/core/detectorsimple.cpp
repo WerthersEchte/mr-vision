@@ -2,6 +2,8 @@
 
 #include "iostream"
 
+#include <QtConcurrent/QtConcurrent>
+
 namespace mrvision {
 
 DetectorSimple::DetectorSimple( std::string aCameraParameterFile, float aSizeOfMarker ) :
@@ -22,20 +24,20 @@ void DetectorSimple::setMarkerList( MarkerList* aMarkerList ){
 
 }
 
-std::vector<aruco::Marker>* DetectorSimple::detectMarkers( const cv::Mat& aImage ){
+void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
 
-    std::vector<aruco::Marker>* vFoundMarkers = new std::vector<aruco::Marker>();
+    std::vector<aruco::Marker> vFoundMarkers;
 
     mCameraParameters.resize( aImage.size() );
-    mDetector.detect(aImage ,*vFoundMarkers, mCameraParameters, mSizeOfMarker);
+    mDetector.detect( aImage , vFoundMarkers, mCameraParameters, mSizeOfMarker );
 
-    return vFoundMarkers;
+    emit markersDetected( vFoundMarkers );
 
 }
 
-void DetectorSimple::setThreshold( int aThreshold ){
+void DetectorSimple::detectMarkers( const cv::Mat& aImage ){
 
-    mThreshold = aThreshold;
+    QtConcurrent::run(this, &DetectorSimple::detectingMarkerInImage, aImage);
 
 }
 

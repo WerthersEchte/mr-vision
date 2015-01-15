@@ -1,15 +1,12 @@
 #include "camera.h"
 
-#include <QMutexLocker>
-#include <QtConcurrent/QtConcurrent>
 
 namespace mrvision {
 
 Camera::Camera( dc1394camera_t *aCamera ) :
         mCamera(aCamera),
         mLastVideoframe(nullptr),
-        mCurrentPicture(nullptr),
-        mIsFetchingPictures(false)
+        mIsFetchingVideoframes(false)
 {
 
     if( !aCamera ){
@@ -41,8 +38,8 @@ Camera::Camera( dc1394camera_t *aCamera ) :
 Camera::~Camera(){
 
     if( isValid() ){
-        while( mCurrentPicture ){
-            mIsFetchingPictures = false;
+        while( isRunning() ){
+            mIsFetchingVideoframes = false;
         }
         dc1394_video_set_transmission(mCamera, DC1394_OFF);
         dc1394_capture_stop(mCamera);
@@ -52,20 +49,17 @@ Camera::~Camera(){
 
 }
 
-cv::Mat* Camera::getVideoFrame(){
+void Camera::startVideoCapture(){
 
-    if( isValid() && !mCurrentPicture ){
-
-        dc1394_capture_dequeue(mCamera, DC1394_CAPTURE_POLICY_WAIT, &mLastVideoframe);
-        mCurrentPicture = new cv::Mat( mCameraImageHeight, mCameraImageWidth, CV_8UC1, mLastVideoframe->image );
-        dc1394_capture_enqueue( mCamera, mLastVideoframe);
-
-        mIsFetchingPictures = true;
-        QtConcurrent::run(this, &Camera::getPictureLoop);
-
+    if( isValid() ){
+        start();
     }
 
-    return mCurrentPicture;
+}
+
+void Camera::stopVideoCapture(){
+
+    mIsFetchingVideoframes = false;
 
 }
 
@@ -78,6 +72,22 @@ bool Camera::isValid(){
 uint64_t Camera::getId(){
 
     return mCamera->guid;
+
+}
+
+void Camera::run(){
+
+    mIsFetchingVideoframes = true;
+
+    while( mIsFetchingVideoframes ){
+
+        dc1394_capture_dequeue(mCamera, DC1394_CAPTURE_POLICY_WAIT, &mLastVideoframe);
+        cv::Mat vCurrentFrame( mCameraImageHeight, mCameraImageWidth, CV_8UC1, mLastVideoframe->image );
+        dc1394_capture_enqueue( mCamera, mLastVideoframe);
+
+        emit newVideoFrame( vCurrentFrame );
+
+    }
 
 }
 
@@ -117,24 +127,6 @@ QList<Camera*> Camera::findCameras(){
     dc1394_camera_free_list (list);
 
     return vCameraList;
-
-}
-
-void Camera::getPictureLoop(){
-
-    QMutexLocker vLocker(&mMutex);
-
-    while( mIsFetchingPictures ){
-
-        dc1394_capture_dequeue(mCamera, DC1394_CAPTURE_POLICY_WAIT, &mLastVideoframe);
-        vLocker.relock();
-        mCurrentPicture = new cv::Mat( mCameraImageHeight, mCameraImageWidth, CV_8UC1, mLastVideoframe->image );
-        vLocker.unlock();
-        dc1394_capture_enqueue( mCamera, mLastVideoframe);
-
-    }
-    vLocker.relock();
-    mCurrentPicture = nullptr;
 
 }
 

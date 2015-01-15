@@ -7,15 +7,24 @@
 #include <vector>
 #include <aruco/aruco.h>
 
+#include <QObject>
+
 namespace mrvision {
 
-class Detector{
+class Detector : public QObject{
+
+    Q_OBJECT
 
 public:
     virtual ~Detector(){};
 
     virtual void setMarkerList( MarkerList* aMarkerList ) = 0;
-    virtual std::vector<aruco::Marker>* detectMarkers( const cv::Mat& aImage ) = 0;
+
+public slots:
+    virtual void detectMarkers( const cv::Mat& aImage ) = 0;
+
+signals:
+    void markersDetected( std::vector<aruco::Marker> aListOfMarkers );
 
 };
 

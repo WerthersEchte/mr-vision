@@ -20,22 +20,26 @@ class CameraGui : public QWidget
 	Camera* mCamera;
 	Detector* mDetector;
 
-	bool mDetectionIsRunning, mStreamIsRunning;
-
 public:
     explicit CameraGui( Camera *aCamera, QWidget *aParent = 0 );
     ~CameraGui();
-public slots:
+
+private slots:
     void detectBots( bool aActivateDetection = false );
-    void streamVideo( bool aActivateStream = false );
+    void startStreamingVideo( bool aStreaming = false );
+
     void paintPicture(const QPixmap &aPicture);
 
+    void testMarkerDetection( std::vector<aruco::Marker> aListOfMarkers );
+
+public slots:
+    void streamVideo( const cv::Mat& aVideoFrame );
+
 signals:
-    void newPicture(const QPixmap &);
+    void newPicture( const QPixmap & );
 
 private:
-    void streamLoop();
-    void detectionLoop();
+    void createPictureFromVideoframe( const cv::Mat& aVideoFrame );
 
 };
 
