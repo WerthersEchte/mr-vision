@@ -8,7 +8,8 @@ namespace mrvision {
 
 DetectorSimple::DetectorSimple( std::string aCameraParameterFile, float aSizeOfMarker ) :
     mDetector(),
-    mSizeOfMarker(aSizeOfMarker)
+    mSizeOfMarker(aSizeOfMarker),
+    isRunning(false)
 {
     mCameraParameters.readFromXMLFile( aCameraParameterFile.c_str() );
 
@@ -32,12 +33,16 @@ void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
     mDetector.detect( aImage , vFoundMarkers, mCameraParameters, mSizeOfMarker );
 
     emit markersDetected( vFoundMarkers );
+    isRunning = false;
 
 }
 
 void DetectorSimple::detectMarkers( const cv::Mat& aImage ){
 
-    QtConcurrent::run(this, &DetectorSimple::detectingMarkerInImage, aImage);
+    if( !isRunning ){
+        isRunning = true;
+        QtConcurrent::run(this, &DetectorSimple::detectingMarkerInImage, aImage);
+    }
 
 }
 

@@ -2,26 +2,45 @@
 #define _udp_server_h
 
 #include <boost/asio.hpp>
+#include <boost/lockfree/queue.hpp>
 
 #include <map>
 #include "bot.h"
 
+#include <QThread>
+#include <QList>
+
 namespace mrvision {
 
-class UDPServer{
+class UDPServer : public QThread{
+
+    Q_OBJECT
 
 	boost::asio::io_service m_io_service;
 	boost::asio::ip::udp::socket mSocket;
 	boost::asio::ip::udp::endpoint sender_endpoint;
 
-public:
+	bool hasToSendData;
+	boost::lockfree::queue<mrvision::Bot> mDataToSend;
+
 	UDPServer( int aPort );
 
-	void start();
-	void send_Data( std::map<int, Bot> mBots );
+public:
+    ~UDPServer();
+
+    static UDPServer* getInstance();
+
+	void startServer();
+
+public slots:
+	void send_Data( const QList<mrvision::Bot>& mBots );
+
 private:
+    void run();
 
 };
+
+static UDPServer *INSTANCE;
 
 
 }

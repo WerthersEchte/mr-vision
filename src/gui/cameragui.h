@@ -30,8 +30,6 @@ private slots:
 
     void paintPicture(const QPixmap &aPicture);
 
-    void testMarkerDetection( std::vector<aruco::Marker> aListOfMarkers );
-
 public slots:
     void streamVideo( const cv::Mat& aVideoFrame );
 

@@ -2,10 +2,13 @@
 #include "ui_camera.h"
 
 #include "src/core/detectorsimple.h"
+#include "src/core/udp_server.h"
 
 #include <QThread>
 #include <QtConcurrent/QtConcurrent>
 #include <QPainter>
+
+#include <aruco/aruco.h>
 
 #include <iostream>
 
@@ -22,12 +25,17 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     connect( mUi->grpBCameraStream, SIGNAL( clicked( bool ) ), this, SLOT( startStreamingVideo( bool ) ) );
     connect( this, SIGNAL( newPicture( QPixmap ) ), this, SLOT( paintPicture( QPixmap ) ) );
 
-    qRegisterMetaType< std::vector<aruco::Marker> >("std::vector<aruco::Marker>");
-    connect( mDetector, SIGNAL( markersDetected( std::vector<aruco::Marker> ) ), this, SLOT( testMarkerDetection( std::vector<aruco::Marker> ) ) );
-
     mDetector->setMarkerList( new MarkerList() );
 
     mUi->lblName->setText( QString::number( mCamera->getId() ) );
+
+    UDPServer::getInstance()->startServer();
+
+    qRegisterMetaType< std::vector<aruco::Marker> >("std::vector<aruco::Marker>");
+    connect( mDetector, SIGNAL( markersDetected( std::vector<aruco::Marker> ) ), mCamera, SLOT( decodeBotPositions( std::vector<aruco::Marker> ) ) );
+    qRegisterMetaType< QList<mrvision::Bot> >("QList<mrvision::Bot>");
+    connect( mCamera, SIGNAL( decodedBotPositions( QList<mrvision::Bot> ) ), UDPServer::getInstance(), SLOT( send_Data( QList<mrvision::Bot> ) ) );
+
 }
 
 CameraGui::~CameraGui() {
@@ -49,14 +57,6 @@ void CameraGui::detectBots( bool aActivateDetection ){
 
         disconnect( mCamera, &Camera::newVideoFrame, mDetector, &Detector::detectMarkers );
 
-    }
-
-}
-
-void CameraGui::testMarkerDetection( std::vector<aruco::Marker> aListOfMarkers ){
-
-    foreach( aruco::Marker vMarker, aListOfMarkers ){
-        std::cout << vMarker.id << std::endl ;
     }
 
 }

@@ -24,7 +24,7 @@ public slots:
     virtual void detectMarkers( const cv::Mat& aImage ) = 0;
 
 signals:
-    void markersDetected( std::vector<aruco::Marker> aListOfMarkers );
+    void markersDetected( const std::vector<aruco::Marker>& aListOfMarkers );
 
 };
 

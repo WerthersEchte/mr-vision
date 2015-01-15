@@ -1,5 +1,9 @@
 #include "camera.h"
 
+#include "src/core/udp_server.h"
+#include <QtConcurrent/QtConcurrent>
+
+#include <iostream>
 
 namespace mrvision {
 
@@ -75,15 +79,47 @@ uint64_t Camera::getId(){
 
 }
 
+void Camera::decodeBotPositions( const std::vector<aruco::Marker>& aListOfMarkers ){
+
+    QtConcurrent::run(this, &Camera::calculateBotPositions, aListOfMarkers);
+
+}
+
+#define PI 3.14159265
+
+void Camera::calculateBotPositions( const std::vector<aruco::Marker>& aListOfMarkers ){
+
+    QList<mrvision::Bot> vBots;
+    int k = 11,it, offset=16, sosize=706;
+
+    for( aruco::Marker vMarker : aListOfMarkers )
+    {
+        cv::Point2f vPoint = vMarker[1] - vMarker[2];
+        vBots.append( mrvision::Bot(
+                vMarker.id,
+                ( vMarker.getCenter().y + 321 ) / 850,
+                ( vMarker.getCenter().x - offset ) / sosize,
+                atan2( vPoint.x, vPoint.y) * 180 / PI) );
+    }
+
+    emit decodedBotPositions( vBots );
+
+}
+
 void Camera::run(){
 
     mIsFetchingVideoframes = true;
 
+        std::clock_t tStart;
     while( mIsFetchingVideoframes ){
+
+        tStart = std::clock();
 
         dc1394_capture_dequeue(mCamera, DC1394_CAPTURE_POLICY_WAIT, &mLastVideoframe);
         cv::Mat vCurrentFrame( mCameraImageHeight, mCameraImageWidth, CV_8UC1, mLastVideoframe->image );
         dc1394_capture_enqueue( mCamera, mLastVideoframe);
+
+        std::cout << (double)(std::clock() - tStart)/CLOCKS_PER_SEC << std::endl;
 
         emit newVideoFrame( vCurrentFrame );
 

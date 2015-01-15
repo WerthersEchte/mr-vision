@@ -16,7 +16,7 @@ class DetectorSimple : public Detector{
     aruco::CameraParameters mCameraParameters;
     aruco::MarkerDetector mDetector;
     float mSizeOfMarker;
-    int mThreshold;
+    bool isRunning;
 
 public:
     DetectorSimple( std::string aCameraParameterFile, float aSizeOfMarker = 0.025 );
