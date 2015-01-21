@@ -26,6 +26,7 @@ set( SOURCE
    src/gui/visiongui.cpp
    src/gui/cameragui.cpp
    src/gui/networkgui.cpp
+   src/gui/markergui.cpp
    src/core/bot.cpp
    src/core/camera.cpp
    src/core/marker.cpp
@@ -38,6 +39,7 @@ set( HEADERS
    src/gui/visiongui.h
    src/gui/cameragui.h
    src/gui/networkgui.h
+   src/gui/markergui.h
    src/core/bot.h
    src/core/camera.h
    src/core/marker.h
@@ -52,6 +54,7 @@ set( UI_FILES
    src/gui/ui/vision.ui
    src/gui/ui/camera.ui
    src/gui/ui/network.ui
+   src/gui/ui/marker.ui
 )
 
 QT5_WRAP_UI( UI_HEADERS

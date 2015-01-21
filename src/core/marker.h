@@ -18,7 +18,8 @@ public:
 
 	bool compareTo( std::vector<bool> aRealMarker, int &aRotations );
 
-	int getId();
+	int getId() const;
+	std::vector<bool> getMakerRotation( int aRotation = 0 ) const;
 
 	void print();
 

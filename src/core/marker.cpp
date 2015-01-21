@@ -59,11 +59,21 @@ bool Marker::compareTo( std::vector<bool> aRealMarker, int &aRotations ){
 
 };
 
-int Marker::getId(){
+int Marker::getId() const{
 
 	return mId;
 
 };
+
+std::vector<bool> Marker::getMakerRotation( int aRotation ) const{
+
+    if( aRotation < 0 || aRotation > mRotationsOfMarker.size() ){
+        return mRotationsOfMarker.at(0);
+    }
+    return mRotationsOfMarker.at(aRotation);
+
+}
+
 
 void Marker::print(){
 

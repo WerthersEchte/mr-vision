@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>664</width>
-    <height>594</height>
+    <height>560</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1195,16 +1195,9 @@
          <bool>true</bool>
         </property>
         <property name="checked">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
-        <layout class="QFormLayout" name="formLayout">
-         <property name="fieldGrowthPolicy">
-          <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-         </property>
-         <property name="rowWrapPolicy">
-          <enum>QFormLayout::WrapAllRows</enum>
-         </property>
-        </layout>
+        <layout class="QGridLayout" name="gridLayout"/>
        </widget>
       </item>
       <item>

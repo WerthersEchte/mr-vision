@@ -3,6 +3,8 @@
 
 #include "src/core/detectorsimple.h"
 #include "src/core/udp_server.h"
+#include "src/core/marker.h"
+#include "src/gui/markergui.h"
 
 #include <QThread>
 #include <QtConcurrent/QtConcurrent>
@@ -68,6 +70,19 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     connect( mUi->lELowerBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
     connect( mUi->lEULOffset, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
     connect( mUi->lELROffset, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+
+    MarkerList vMarkerList;
+    int vPosition = 0;
+    mUi->gBMarker->layout()->setSizeConstraint(QLayout::SetFixedSize);
+
+    foreach( Marker vMarker, vMarkerList.getMarker() ){
+
+        MarkerGui* vMarkerGui = new MarkerGui( vMarker, this);
+        static_cast<QGridLayout*>(mUi->gBMarker->layout())->addWidget( vMarkerGui, vPosition / 6, vPosition % 6 );
+        vMarkerGui->show();
+        vPosition++;
+
+    }
 
 }
 
