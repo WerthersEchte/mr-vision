@@ -3,6 +3,7 @@
 
 #include "cameragui.h"
 #include "src/core/camera.h"
+#include "src/gui/networkgui.h"
 
 #include <QScrollArea>
 
@@ -15,16 +16,26 @@ namespace mrvision {
 VisionGui::VisionGui( QWidget *aParent) :
     QMainWindow(aParent),
     mUi(new Ui::Vision),
-    mCameraGuis()
+    mCameraGuis(),
+    mNetworkGui( new NetworkGui() )
 {
     mUi->setupUi(this);
+    mUi->tabWidget->addTab( mNetworkGui, "Network" );
+
     connect( mUi->pBFindCameras, SIGNAL( clicked( bool ) ), this, SLOT( findCameras( bool ) ) );
 
     mUi->gBListofCameras->layout()->setSizeConstraint(QLayout::SetMinAndMaxSize);
 }
 
 VisionGui::~VisionGui() {
+
     delete mUi;
+    delete mNetworkGui;
+
+    for(mrvision::CameraGui* vCamera : mCameraGuis ){
+        delete vCamera;
+    }
+
 }
 
 void VisionGui::findCameras( bool aDummy ) {

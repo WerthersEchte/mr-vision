@@ -18,7 +18,11 @@ class Detector : public QObject{
 public:
     virtual ~Detector(){};
 
-    virtual void setMarkerList( MarkerList* aMarkerList ) = 0;
+    virtual void setMarkerSize( float aMarkerSize ) = 0;
+    virtual float getMarkerSize() = 0;
+
+    virtual void setCameraFile( QString aCameraFile ) = 0;
+    virtual aruco::CameraParameters* getCameraFile() = 0;
 
 public slots:
     virtual void detectMarkers( const cv::Mat& aImage ) = 0;

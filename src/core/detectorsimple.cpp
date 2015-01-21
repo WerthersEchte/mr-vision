@@ -6,22 +6,46 @@
 
 namespace mrvision {
 
-DetectorSimple::DetectorSimple( std::string aCameraParameterFile, float aSizeOfMarker ) :
+DetectorSimple::DetectorSimple( float aSizeOfMarker ) :
     mDetector(),
     mSizeOfMarker(aSizeOfMarker),
-    isRunning(false)
+    isRunning(false),
+    mCameraParameters()
 {
-    mCameraParameters.readFromXMLFile( aCameraParameterFile.c_str() );
 
     mDetector.setMinMaxSize(0.001);
     mDetector.setMakerDetectorFunction(&identifyMarker);
+
 }
 
 DetectorSimple::~DetectorSimple(){}
 
-void DetectorSimple::setMarkerList( MarkerList* aMarkerList ){
+void DetectorSimple::setMarkerSize( float aMarkerSize ){
 
-    //DetectorSimple::mMarkerList = aMarkerList;
+    mSizeOfMarker = aMarkerSize;
+
+}
+
+float DetectorSimple::getMarkerSize(){
+
+    return mSizeOfMarker;
+
+}
+
+void DetectorSimple::setCameraFile( QString aCameraFile ){
+
+    try{
+        mCameraParameters.readFromXMLFile( aCameraFile.toLocal8Bit().constData() );
+    } catch( const cv::Exception& vException ){
+
+        std::cout << vException.what() << std::endl;
+
+    }
+}
+
+aruco::CameraParameters* DetectorSimple::getCameraFile(){
+
+    return &mCameraParameters;
 
 }
 
@@ -29,10 +53,14 @@ void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
 
     std::vector<aruco::Marker> vFoundMarkers;
 
-    mCameraParameters.resize( aImage.size() );
-    mDetector.detect( aImage , vFoundMarkers, mCameraParameters, mSizeOfMarker );
+    if( mCameraParameters.isValid() ){
+        mCameraParameters.resize( aImage.size() );
+        mDetector.detect( aImage , vFoundMarkers, mCameraParameters, mSizeOfMarker );
+    }
 
-    emit markersDetected( vFoundMarkers );
+    if( vFoundMarkers.size() ){
+        emit markersDetected( vFoundMarkers );
+    }
     isRunning = false;
 
 }

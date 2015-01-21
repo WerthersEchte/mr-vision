@@ -12,6 +12,7 @@ namespace Ui {
 namespace mrvision {
 
 class CameraGui;
+class NetworkGui;
 
 class VisionGui : public QMainWindow
 {
@@ -19,6 +20,8 @@ class VisionGui : public QMainWindow
 
 	Ui::Vision *mUi;
 	std::list<mrvision::CameraGui*> mCameraGuis;
+
+	NetworkGui* mNetworkGui;
 
 public:
         explicit VisionGui( QWidget *aParent = 0 );

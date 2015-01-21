@@ -24,6 +24,8 @@ class Camera: public QThread {
     bool mIsFetchingVideoframes;
 
 public:
+    int mLowerX, mLowerY, mUpperX, mUpperY, mULMultiplier, mLRMultiplier;
+
     Camera( int aId );
 	Camera( dc1394camera_t *aCamera );
     ~Camera();

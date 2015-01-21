@@ -23,17 +23,28 @@ class UDPServer : public QThread{
 	bool hasToSendData;
 	boost::lockfree::queue<mrvision::Bot> mDataToSend;
 
-	UDPServer( int aPort );
+	int mPort, mPacketTime;
+
+	UDPServer();
 
 public:
     ~UDPServer();
 
     static UDPServer* getInstance();
 
-	void startServer();
+	bool startServer();
+	bool stopServer();
+
+	int getPort();
+	void setPort( int aPort );
+	int getPacketTime();
+	void setPacketTime( int aPort );
 
 public slots:
 	void send_Data( const QList<mrvision::Bot>& mBots );
+
+signals:
+    void statusServer( bool isRunning = false );
 
 private:
     void run();

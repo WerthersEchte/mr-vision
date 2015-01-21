@@ -19,10 +19,13 @@ class DetectorSimple : public Detector{
     bool isRunning;
 
 public:
-    DetectorSimple( std::string aCameraParameterFile, float aSizeOfMarker = 0.025 );
+    DetectorSimple( float aSizeOfMarker = 0.025 );
     virtual ~DetectorSimple();
 
-    virtual void setMarkerList( MarkerList* aMarkerList );
+    virtual void setMarkerSize( float aMarkerSize );
+    virtual float getMarkerSize();
+    virtual void setCameraFile( QString aCameraFile );
+    virtual aruco::CameraParameters* getCameraFile();
 
 public slots:
     virtual void detectMarkers( const cv::Mat& aImage );

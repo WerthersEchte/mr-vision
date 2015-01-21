@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>mrVision</string>
   </property>
   <property name="locale">
    <locale language="English" country="UnitedKingdom"/>
@@ -141,11 +141,6 @@
          </widget>
         </item>
        </layout>
-      </widget>
-      <widget class="QWidget" name="tabNetwork">
-       <attribute name="title">
-        <string>Network</string>
-       </attribute>
       </widget>
      </widget>
     </item>

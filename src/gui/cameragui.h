@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QPixmap>
+#include <QTableWidgetItem>
 #include "src/core/camera.h"
 #include "src/core/detector.h"
 
@@ -29,6 +30,18 @@ private slots:
     void startStreamingVideo( bool aStreaming = false );
 
     void paintPicture(const QPixmap &aPicture);
+
+    void setCameraFile();
+    void setMarkerSize();
+
+    void selectCameraFile( bool aDummy );
+
+    void pushUp( bool aDummy );
+    void pushDown( bool aDummy );
+    void pushLeft( bool aDummy );
+    void pushRight( bool aDummy );
+
+    void setBorderData();
 
 public slots:
     void streamVideo( const cv::Mat& aVideoFrame );

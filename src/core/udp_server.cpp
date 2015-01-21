@@ -15,7 +15,7 @@ UDPServer* UDPServer::getInstance(){
 
     if( INSTANCE == nullptr ){
 
-        INSTANCE = new UDPServer( 9050 );
+        INSTANCE = new UDPServer();
 
     }
 
@@ -23,18 +23,16 @@ UDPServer* UDPServer::getInstance(){
 
 }
 
-UDPServer::UDPServer( int aPort ) :
+UDPServer::UDPServer() :
 	mSocket( m_io_service ),
 	hasToSendData(false),
-	mDataToSend(512)
+	mDataToSend(512),
+	mPort(9050),
+	mPacketTime(20)
 {
 
     mSocket.open(boost::asio::ip::udp::v4());
-    mSocket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), aPort ));
-
-    if (!mDataToSend.is_lock_free())
-        std::cout << "not ";
-    std::cout << "lockfree" << std::endl;
+    mSocket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), mPort ));
 
 }
 
@@ -48,10 +46,65 @@ UDPServer::~UDPServer(){
 
 }
 
-void UDPServer::startServer()
+bool UDPServer::startServer()
 {
-    hasToSendData = true;
-    start();
+
+    if( !isRunning() && !hasToSendData ){
+
+        mSocket.close();
+        mSocket.open(boost::asio::ip::udp::v4());
+        mSocket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), mPort ));
+        hasToSendData = true;
+        start();
+        return true;
+
+    }
+
+    hasToSendData = false;
+
+    return false;
+
+}
+
+bool UDPServer::stopServer()
+{
+
+    if( isRunning() && hasToSendData ){
+
+        hasToSendData = false;
+        return true;
+
+    }
+
+    return false;
+
+}
+
+int UDPServer::getPort()
+{
+
+    return mPort;
+
+}
+
+int UDPServer::getPacketTime()
+{
+
+    return mPacketTime;
+
+}
+
+void UDPServer::setPort( int aPort )
+{
+
+    mPort = aPort;
+
+}
+
+void UDPServer::setPacketTime( int aPacketTime )
+{
+
+    mPacketTime = aPacketTime;
 
 }
 
@@ -62,6 +115,8 @@ void UDPServer::send_Data( const QList<mrvision::Bot>& mBots ){
         foreach( mrvision::Bot vBot, mBots ){
 
             mDataToSend.push(vBot);
+
+            std::cout << vBot.getId() << "(" << vBot.getX() << "/" <<  vBot.getY() << ") " << std::endl;
 
         }
     }
@@ -74,6 +129,8 @@ std::string vStartDataPackage("<?xml version=\"1.0\" encoding=\"UTF-8\" standalo
 std::string vEndDataPackage( "</positiondatapackage>" );
 
 void UDPServer::run(){
+
+    emit statusServer(true);
 
 	std::string vAcknowlege("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
 			"<connectionacknowlege>"
@@ -111,11 +168,7 @@ void UDPServer::run(){
             vPositionData << vBot.getAngle();
             vPositionData << "</angle></objects>";
 
-            std::cout << vBot.getId() << "(" << vBot.getX() << "/" <<  vBot.getY() << ") ";
-
         }
-
-        std::cout << std::endl;
 
         if( vDataToSend ){
             vPositionData << vEndDataPackage;
@@ -123,9 +176,13 @@ void UDPServer::run(){
             mSocket.send_to(boost::asio::buffer( vPositionData.str().c_str(), vPositionData.str().length() ), sender_endpoint);
         }
 
-        while(((double)(std::clock() - tStart)/CLOCKS_PER_SEC) < 0.02 ){ }
+        while(((double)(std::clock() - tStart)/CLOCKS_PER_SEC) < (double) mPacketTime/1000 ){ }
 
     }
+
+    mSocket.close();
+
+    emit statusServer(false);
 
 }
 

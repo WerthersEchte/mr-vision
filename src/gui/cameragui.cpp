@@ -7,10 +7,14 @@
 #include <QThread>
 #include <QtConcurrent/QtConcurrent>
 #include <QPainter>
+#include <QFileDialog>
+#include <QFile>
+#include <QValidator>
 
 #include <aruco/aruco.h>
 
 #include <iostream>
+#include <limits>
 
 namespace mrvision {
 
@@ -18,23 +22,52 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     QWidget(aParent),
     mUi(new Ui::Camera),
     mCamera(aCamera),
-    mDetector(new DetectorSimple( "cameralinks.yml" ))
+    mDetector(new DetectorSimple())
 {
     mUi->setupUi(this);
+    mUi->gBName->layout()->setSizeConstraint(QLayout::SetMinimumSize);
+
+    mUi->lblName->setText( QString::number( mCamera->getId() ) );
+    mUi->lEMarkerSize->setText( QString::number( mDetector->getMarkerSize() ) );
+
+    QValidator *vValidator = new QIntValidator(0, std::numeric_limits<int>::max(), this);
+
+    mUi->lELeftBorder->setValidator( vValidator );
+    mUi->lERightBorder->setValidator( vValidator );
+    mUi->lEUpperBorder->setValidator( vValidator );
+    mUi->lELowerBorder->setValidator( vValidator );
+    mUi->lEULOffset->setValidator( vValidator );
+    mUi->lELROffset->setValidator( vValidator );
+    mUi->lEPointsperClick->setValidator( vValidator );
+
+    vValidator = new QDoubleValidator( 0.0, 100.0, 5, this);
+    mUi->lEMarkerSize->setValidator( vValidator );
+
     connect( mUi->cBActive, SIGNAL( clicked( bool ) ), this, SLOT( detectBots( bool ) ) );
     connect( mUi->grpBCameraStream, SIGNAL( clicked( bool ) ), this, SLOT( startStreamingVideo( bool ) ) );
     connect( this, SIGNAL( newPicture( QPixmap ) ), this, SLOT( paintPicture( QPixmap ) ) );
-
-    mDetector->setMarkerList( new MarkerList() );
-
-    mUi->lblName->setText( QString::number( mCamera->getId() ) );
-
-    UDPServer::getInstance()->startServer();
 
     qRegisterMetaType< std::vector<aruco::Marker> >("std::vector<aruco::Marker>");
     connect( mDetector, SIGNAL( markersDetected( std::vector<aruco::Marker> ) ), mCamera, SLOT( decodeBotPositions( std::vector<aruco::Marker> ) ) );
     qRegisterMetaType< QList<mrvision::Bot> >("QList<mrvision::Bot>");
     connect( mCamera, SIGNAL( decodedBotPositions( QList<mrvision::Bot> ) ), UDPServer::getInstance(), SLOT( send_Data( QList<mrvision::Bot> ) ) );
+
+    connect( mUi->lEMarkerSize, SIGNAL( editingFinished( ) ), this, SLOT( setMarkerSize( ) ) );
+
+    connect( mUi->lECameraFile, SIGNAL( editingFinished( ) ), this, SLOT( setCameraFile( ) ) );
+    connect( mUi->pBLoadCameraConfigFile, SIGNAL( clicked( bool ) ), this, SLOT( selectCameraFile( bool ) ) );
+
+    connect( mUi->pBMoveUp, SIGNAL( clicked( bool ) ), this, SLOT( pushUp( bool ) ) );
+    connect( mUi->pBMoveDown, SIGNAL( clicked( bool ) ), this, SLOT( pushDown( bool ) ) );
+    connect( mUi->pBMoveLeft, SIGNAL( clicked( bool ) ), this, SLOT( pushLeft( bool ) ) );
+    connect( mUi->pBMoveRight, SIGNAL( clicked( bool ) ), this, SLOT( pushRight( bool ) ) );
+
+    connect( mUi->lELeftBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+    connect( mUi->lERightBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+    connect( mUi->lEUpperBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+    connect( mUi->lELowerBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+    connect( mUi->lEULOffset, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+    connect( mUi->lELROffset, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
 
 }
 
@@ -46,12 +79,119 @@ CameraGui::~CameraGui() {
 
 }
 
+void CameraGui::pushUp( bool aDummy ){
+
+    if( mUi->cBUpperBorder->isChecked() ){
+        mUi->lEUpperBorder->setText( QString::number( mUi->lEUpperBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBLowerBorder->isChecked() ){
+        mUi->lELowerBorder->setText( QString::number( mUi->lELowerBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBULOffset->isChecked() ){
+        mUi->lEULOffset->setText( QString::number( mUi->lEULOffset->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBLROffset->isChecked() ){
+        mUi->lELROffset->setText( QString::number( mUi->lELROffset->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+
+    setBorderData();
+
+}
+
+void CameraGui::pushDown( bool aDummy ){
+
+    if( mUi->cBUpperBorder->isChecked() ){
+        mUi->lEUpperBorder->setText( QString::number( mUi->lEUpperBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBLowerBorder->isChecked() ){
+        mUi->lELowerBorder->setText( QString::number( mUi->lELowerBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBULOffset->isChecked() ){
+        mUi->lEULOffset->setText( QString::number( mUi->lEULOffset->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBLROffset->isChecked() ){
+        mUi->lELROffset->setText( QString::number( mUi->lELROffset->text().toInt() -  mUi->lEPointsperClick->text().toInt() ) );
+    }
+
+    setBorderData();
+
+}
+
+void CameraGui::pushLeft( bool aDummy ){
+
+    if( mUi->cBLeftBorder->isChecked() ){
+        mUi->lELeftBorder->setText( QString::number( mUi->lELeftBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBRightBorder->isChecked() ){
+        mUi->lERightBorder->setText( QString::number( mUi->lERightBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
+    }
+
+    setBorderData();
+
+}
+
+void CameraGui::pushRight( bool aDummy ){
+
+    if( mUi->cBLeftBorder->isChecked() ){
+        mUi->lELeftBorder->setText( QString::number( mUi->lELeftBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBRightBorder->isChecked() ){
+        mUi->lERightBorder->setText( QString::number( mUi->lERightBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+
+    setBorderData();
+
+}
+
+void CameraGui::setBorderData(){
+
+    mCamera->mLowerY = mUi->lELeftBorder->text().toInt();
+    mCamera->mUpperY = mUi->lERightBorder->text().toInt();
+    mCamera->mLowerX = mUi->lEUpperBorder->text().toInt();
+    mCamera->mUpperX = mUi->lELowerBorder->text().toInt();
+    mCamera->mULMultiplier = mUi->lEULOffset->text().toInt();
+    mCamera->mLRMultiplier = mUi->lELROffset->text().toInt();
+
+}
+
+void CameraGui::setCameraFile( ){
+
+    if( QFile::exists( mUi->lECameraFile->text() ) ){
+        mDetector->setCameraFile( mUi->lECameraFile->text() );
+    }
+
+}
+
+void CameraGui::setMarkerSize( ){
+
+    mDetector->setMarkerSize( mUi->lEMarkerSize->text().toFloat() );
+
+}
+
+void CameraGui::selectCameraFile( bool aDummy ){
+
+    QString vCameraFileName = QFileDialog::getOpenFileName(this, tr("Select Camerafile"), "", tr("Camera Files (*.yml);;All Files (*.*)"));
+
+	if ( vCameraFileName.isEmpty() ){
+		return;
+	}
+
+    mUi->lECameraFile->setText( vCameraFileName );
+    setCameraFile();
+
+}
+
 void CameraGui::detectBots( bool aActivateDetection ){
 
     if( aActivateDetection ){
 
         qRegisterMetaType< cv::Mat >("cv::Mat");
         connect( mCamera, SIGNAL( newVideoFrame( cv::Mat ) ), mDetector, SLOT( detectMarkers( cv::Mat ) ) );
+
+        if( !mCamera->isRunning() ){
+
+            mCamera->startVideoCapture();
+        }
 
     } else {
 
@@ -94,16 +234,21 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
 
         QPixmap vPixmap;
 
-        QPen LinePenRed(Qt::red,1), LinePenGreen(Qt::green,1);
+        QPen LinePenRed(Qt::red,1), LinePenGreen(Qt::green,1), LinePenBlue(Qt::blue,1), LinePenYellow(Qt::yellow,1);
 
         QVector<QRgb> vColorTable;
         for (int i=0; i<256; i++){
             vColorTable.push_back(qRgb(i,i,i));
         }
 
-        // Copy input Mat
-        // Create QImage with same dimensions as input Mat
-        QImage img((const uchar*)aVideoFrame.data, aVideoFrame.cols, aVideoFrame.rows, aVideoFrame.step, QImage::Format_Indexed8);
+        cv::Mat undistorted;
+        if( mUi->cBUndistort->isChecked() && mDetector->getCameraFile()->isValid() ){
+            cv::undistort(aVideoFrame, undistorted, mDetector->getCameraFile()->CameraMatrix, mDetector->getCameraFile()->Distorsion );
+        } else {
+            undistorted = aVideoFrame;
+        }
+
+        QImage img((const uchar*)undistorted.data, undistorted.cols, undistorted.rows, undistorted.step, QImage::Format_Indexed8);
         img.setColorTable(vColorTable);
 
         vPixmap = QPixmap::fromImage( img );
@@ -131,6 +276,40 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
             for( int i = 50; i < vPixmap.height(); i = i + 50){
                 painter.drawLine(0,i,vPixmap.width(),i);
             }
+
+            painter.end();
+
+        }
+        if( mUi->cBBorders->isChecked() ){
+
+            QPainter painter( &vPixmap );
+            if( mUi->cBUpperBorder->isChecked() ){
+                painter.setPen( LinePenYellow );
+            } else {
+                painter.setPen( LinePenBlue );
+            }
+            painter.drawLine(0, mUi->lEUpperBorder->text().toInt() ,vPixmap.width(), mUi->lEUpperBorder->text().toInt() );
+
+            if( mUi->cBLowerBorder->isChecked() ){
+                painter.setPen( LinePenYellow );
+            } else {
+                painter.setPen( LinePenBlue );
+            }
+            painter.drawLine(0, mUi->lELowerBorder->text().toInt() ,vPixmap.width(), mUi->lELowerBorder->text().toInt() );
+
+            if( mUi->cBLeftBorder->isChecked() ){
+                painter.setPen( LinePenYellow );
+            } else {
+                painter.setPen( LinePenBlue );
+            }
+            painter.drawLine(mUi->lELeftBorder->text().toInt() , 0,mUi->lELeftBorder->text().toInt() , vPixmap.height() );
+
+            if( mUi->cBRightBorder->isChecked() ){
+                painter.setPen( LinePenYellow );
+            } else {
+                painter.setPen( LinePenBlue );
+            }
+            painter.drawLine(mUi->lERightBorder->text().toInt() , 0,mUi->lERightBorder->text().toInt() , vPixmap.height() );
 
             painter.end();
 
