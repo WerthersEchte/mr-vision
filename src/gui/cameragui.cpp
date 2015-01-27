@@ -5,6 +5,7 @@
 #include "src/core/udp_server.h"
 #include "src/core/marker.h"
 #include "src/gui/markergui.h"
+#include "src/gui/flowlayout.h"
 
 #include <QThread>
 #include <QtConcurrent/QtConcurrent>
@@ -24,10 +25,10 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     QWidget(aParent),
     mUi(new Ui::Camera),
     mCamera(aCamera),
-    mDetector(new DetectorSimple())
+    mDetector(new DetectorSimple()),
+    mKnownMarkers()
 {
     mUi->setupUi(this);
-    mUi->gBName->layout()->setSizeConstraint(QLayout::SetMinimumSize);
 
     mUi->lblName->setText( QString::number( mCamera->getId() ) );
     mUi->lEMarkerSize->setText( QString::number( mDetector->getMarkerSize() ) );
@@ -46,6 +47,7 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->lEMarkerSize->setValidator( vValidator );
 
     connect( mUi->cBActive, SIGNAL( clicked( bool ) ), this, SLOT( detectBots( bool ) ) );
+    connect( mUi->gBMarker, SIGNAL( clicked( bool ) ), this, SLOT( showMarker( bool ) ) );
     connect( mUi->grpBCameraStream, SIGNAL( clicked( bool ) ), this, SLOT( startStreamingVideo( bool ) ) );
     connect( this, SIGNAL( newPicture( QPixmap ) ), this, SLOT( paintPicture( QPixmap ) ) );
 
@@ -73,20 +75,28 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
 
     MarkerList vMarkerList;
     int vPosition = 0;
-    mUi->gBMarker->layout()->setSizeConstraint(QLayout::SetFixedSize);
+    FlowLayout *vLayout = new FlowLayout();
 
     foreach( Marker vMarker, vMarkerList.getMarker() ){
 
-        MarkerGui* vMarkerGui = new MarkerGui( vMarker, this);
-        static_cast<QGridLayout*>(mUi->gBMarker->layout())->addWidget( vMarkerGui, vPosition / 6, vPosition % 6 );
-        vMarkerGui->show();
-        vPosition++;
+        MarkerGui* vMarkerGui = new MarkerGui( vMarker );
+        vLayout->addWidget( vMarkerGui );
+        vMarkerGui->hide();
+        mKnownMarkers.append( vMarkerGui );
+        connect( mCamera, SIGNAL( detectedBot( int ) ), vMarkerGui, SLOT( blink( int ) ) );
 
     }
+    mUi->gBMarker->setLayout( vLayout );
 
 }
 
 CameraGui::~CameraGui() {
+
+    foreach( MarkerGui* vMarkerGui, mKnownMarkers ){
+
+        delete vMarkerGui;
+
+    }
 
     delete mUi;
     delete mCamera;
@@ -94,80 +104,27 @@ CameraGui::~CameraGui() {
 
 }
 
-void CameraGui::pushUp( bool aDummy ){
+void CameraGui::showMarker( bool aShow ){
 
-    if( mUi->cBUpperBorder->isChecked() ){
-        mUi->lEUpperBorder->setText( QString::number( mUi->lEUpperBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBLowerBorder->isChecked() ){
-        mUi->lELowerBorder->setText( QString::number( mUi->lELowerBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBULOffset->isChecked() ){
-        mUi->lEULOffset->setText( QString::number( mUi->lEULOffset->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBLROffset->isChecked() ){
-        mUi->lELROffset->setText( QString::number( mUi->lELROffset->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
+    if( aShow ){
 
-    setBorderData();
+        foreach( MarkerGui* vMarkerGui, mKnownMarkers ){
+
+            vMarkerGui->show();
+
+        }
+
+    } else {
+
+        foreach( MarkerGui* vMarkerGui, mKnownMarkers ){
+
+            vMarkerGui->hide();
+
+        }
+    }
 
 }
 
-void CameraGui::pushDown( bool aDummy ){
-
-    if( mUi->cBUpperBorder->isChecked() ){
-        mUi->lEUpperBorder->setText( QString::number( mUi->lEUpperBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBLowerBorder->isChecked() ){
-        mUi->lELowerBorder->setText( QString::number( mUi->lELowerBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBULOffset->isChecked() ){
-        mUi->lEULOffset->setText( QString::number( mUi->lEULOffset->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBLROffset->isChecked() ){
-        mUi->lELROffset->setText( QString::number( mUi->lELROffset->text().toInt() -  mUi->lEPointsperClick->text().toInt() ) );
-    }
-
-    setBorderData();
-
-}
-
-void CameraGui::pushLeft( bool aDummy ){
-
-    if( mUi->cBLeftBorder->isChecked() ){
-        mUi->lELeftBorder->setText( QString::number( mUi->lELeftBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBRightBorder->isChecked() ){
-        mUi->lERightBorder->setText( QString::number( mUi->lERightBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
-    }
-
-    setBorderData();
-
-}
-
-void CameraGui::pushRight( bool aDummy ){
-
-    if( mUi->cBLeftBorder->isChecked() ){
-        mUi->lELeftBorder->setText( QString::number( mUi->lELeftBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBRightBorder->isChecked() ){
-        mUi->lERightBorder->setText( QString::number( mUi->lERightBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-
-    setBorderData();
-
-}
-
-void CameraGui::setBorderData(){
-
-    mCamera->mLowerY = mUi->lELeftBorder->text().toInt();
-    mCamera->mUpperY = mUi->lERightBorder->text().toInt();
-    mCamera->mLowerX = mUi->lEUpperBorder->text().toInt();
-    mCamera->mUpperX = mUi->lELowerBorder->text().toInt();
-    mCamera->mULMultiplier = mUi->lEULOffset->text().toInt();
-    mCamera->mLRMultiplier = mUi->lELROffset->text().toInt();
-
-}
 
 void CameraGui::setCameraFile( ){
 
@@ -235,7 +192,6 @@ void CameraGui::startStreamingVideo( bool aStreaming ){
     }
 
 }
-
 
 void CameraGui::streamVideo( const cv::Mat& aVideoFrame ){
 
@@ -339,6 +295,81 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
 void CameraGui::paintPicture(const QPixmap &aPicture){
 
     mUi->lblVideoStream->setPixmap(aPicture);
+
+}
+
+void CameraGui::pushUp( bool aDummy ){
+
+    if( mUi->cBUpperBorder->isChecked() ){
+        mUi->lEUpperBorder->setText( QString::number( mUi->lEUpperBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBLowerBorder->isChecked() ){
+        mUi->lELowerBorder->setText( QString::number( mUi->lELowerBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBULOffset->isChecked() ){
+        mUi->lEULOffset->setText( QString::number( mUi->lEULOffset->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBLROffset->isChecked() ){
+        mUi->lELROffset->setText( QString::number( mUi->lELROffset->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+
+    setBorderData();
+
+}
+
+void CameraGui::pushDown( bool aDummy ){
+
+    if( mUi->cBUpperBorder->isChecked() ){
+        mUi->lEUpperBorder->setText( QString::number( mUi->lEUpperBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBLowerBorder->isChecked() ){
+        mUi->lELowerBorder->setText( QString::number( mUi->lELowerBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBULOffset->isChecked() ){
+        mUi->lEULOffset->setText( QString::number( mUi->lEULOffset->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBLROffset->isChecked() ){
+        mUi->lELROffset->setText( QString::number( mUi->lELROffset->text().toInt() -  mUi->lEPointsperClick->text().toInt() ) );
+    }
+
+    setBorderData();
+
+}
+
+void CameraGui::pushLeft( bool aDummy ){
+
+    if( mUi->cBLeftBorder->isChecked() ){
+        mUi->lELeftBorder->setText( QString::number( mUi->lELeftBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBRightBorder->isChecked() ){
+        mUi->lERightBorder->setText( QString::number( mUi->lERightBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
+    }
+
+    setBorderData();
+
+}
+
+void CameraGui::pushRight( bool aDummy ){
+
+    if( mUi->cBLeftBorder->isChecked() ){
+        mUi->lELeftBorder->setText( QString::number( mUi->lELeftBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+    if( mUi->cBRightBorder->isChecked() ){
+        mUi->lERightBorder->setText( QString::number( mUi->lERightBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
+    }
+
+    setBorderData();
+
+}
+
+void CameraGui::setBorderData(){
+
+    mCamera->mLowerY = mUi->lELeftBorder->text().toInt();
+    mCamera->mUpperY = mUi->lERightBorder->text().toInt();
+    mCamera->mLowerX = mUi->lEUpperBorder->text().toInt();
+    mCamera->mUpperX = mUi->lELowerBorder->text().toInt();
+    mCamera->mULMultiplier = mUi->lEULOffset->text().toInt();
+    mCamera->mLRMultiplier = mUi->lELROffset->text().toInt();
 
 }
 

@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <QPixmap>
 #include <QTableWidgetItem>
+#include <QList>
+
 #include "src/core/camera.h"
 #include "src/core/detector.h"
 
@@ -13,6 +15,8 @@ namespace Ui {
 
 namespace mrvision{
 
+class MarkerGui;
+
 class CameraGui : public QWidget
 {
 	Q_OBJECT
@@ -21,6 +25,8 @@ class CameraGui : public QWidget
 	Camera* mCamera;
 	Detector* mDetector;
 
+	QList<MarkerGui*> mKnownMarkers;
+
 public:
     explicit CameraGui( Camera *aCamera, QWidget *aParent = 0 );
     ~CameraGui();
@@ -28,6 +34,7 @@ public:
 private slots:
     void detectBots( bool aActivateDetection = false );
     void startStreamingVideo( bool aStreaming = false );
+    void showMarker( bool aShow = false );
 
     void paintPicture(const QPixmap &aPicture);
 

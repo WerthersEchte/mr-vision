@@ -5,6 +5,7 @@
 #include <ctime>
 #include <string>
 #include <boost/asio.hpp>
+#include <exception>
 
 
 namespace mrvision {
@@ -30,10 +31,14 @@ UDPServer::UDPServer() :
 	mPort(9050),
 	mPacketTime(20)
 {
+    try{
+        mSocket.open(boost::asio::ip::udp::v4());
+        mSocket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), mPort ));
+    } catch( std::exception& vException ){
 
-    mSocket.open(boost::asio::ip::udp::v4());
-    mSocket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), mPort ));
+        std::cout << vException.what() << std::endl;
 
+    }
 }
 
 UDPServer::~UDPServer(){
@@ -51,11 +56,19 @@ bool UDPServer::startServer()
 
     if( !isRunning() && !hasToSendData ){
 
-        mSocket.close();
-        mSocket.open(boost::asio::ip::udp::v4());
-        mSocket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), mPort ));
-        hasToSendData = true;
-        start();
+        try{
+            mSocket.close();
+            mSocket.open(boost::asio::ip::udp::v4());
+            mSocket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), mPort ));
+            hasToSendData = true;
+            start();
+        } catch( std::exception& vException ){
+
+            std::cout << vException.what() << std::endl;
+            hasToSendData = false;
+            emit statusServer(false);
+
+        }
         return true;
 
     }

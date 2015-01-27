@@ -45,6 +45,7 @@ public slots:
 signals:
     void newVideoFrame( const cv::Mat& aPicture );
     void decodedBotPositions( QList<mrvision::Bot> aBots );
+    void detectedBot( int aId );
 
 private:
     void run();

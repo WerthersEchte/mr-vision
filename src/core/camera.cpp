@@ -100,6 +100,7 @@ void Camera::calculateBotPositions( const std::vector<aruco::Marker>& aListOfMar
                 ((mLRMultiplier*(mUpperY - mLowerY)) + vMarker.getCenter().y - mLowerY) / (2*(mUpperY - mLowerY)+1),
                 ((mULMultiplier*(mUpperX - mLowerX)) + vMarker.getCenter().x - mLowerX) / (2*(mUpperX - mLowerX)+1),
                 atan2( vPoint.x, vPoint.y) * 180 / PI) );
+        emit detectedBot(vMarker.id);
     }
 
     emit decodedBotPositions( vBots );

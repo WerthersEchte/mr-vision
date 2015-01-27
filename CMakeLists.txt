@@ -27,6 +27,7 @@ set( SOURCE
    src/gui/cameragui.cpp
    src/gui/networkgui.cpp
    src/gui/markergui.cpp
+   src/gui/flowlayout.cpp
    src/core/bot.cpp
    src/core/camera.cpp
    src/core/marker.cpp
@@ -40,6 +41,7 @@ set( HEADERS
    src/gui/cameragui.h
    src/gui/networkgui.h
    src/gui/markergui.h
+   src/gui/flowlayout.h
    src/core/bot.h
    src/core/camera.h
    src/core/marker.h

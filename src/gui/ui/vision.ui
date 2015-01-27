@@ -20,6 +20,12 @@
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
      <widget class="QTabWidget" name="tabWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="locale">
        <locale language="English" country="UnitedKingdom"/>
       </property>
@@ -74,7 +80,7 @@
            <item>
             <widget class="QLabel" name="lblFindCamera">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -84,11 +90,30 @@
              </property>
             </widget>
            </item>
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>1</width>
+               <height>1</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
           </layout>
          </widget>
         </item>
         <item>
          <widget class="QScrollArea" name="scrollArea">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
@@ -105,7 +130,7 @@
             <item>
              <widget class="QGroupBox" name="gBListofCameras">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -120,6 +145,9 @@
                <string>Cameras</string>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_3">
+               <property name="sizeConstraint">
+                <enum>QLayout::SetDefaultConstraint</enum>
+               </property>
                <item>
                 <spacer name="verticalSpacer">
                  <property name="orientation">
@@ -127,8 +155,8 @@
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
-                   <width>20</width>
-                   <height>40</height>
+                   <width>1</width>
+                   <height>1</height>
                   </size>
                  </property>
                 </spacer>

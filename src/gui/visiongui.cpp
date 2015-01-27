@@ -44,8 +44,6 @@ void VisionGui::findCameras( bool aDummy ) {
         delete vCamera;
     }
     mCameraGuis.clear();
-    mUi->gBListofCameras->layout()->setSizeConstraint(QLayout::SetMinAndMaxSize);
-    mUi->gBListofCameras->layout()->setSizeConstraint(QLayout::SetFixedSize);
 
     foreach( Camera* vCamera, Camera::findCameras() ){
 
