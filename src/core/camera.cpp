@@ -28,10 +28,10 @@ Camera::Camera( dc1394camera_t *aCamera ) :
     dc1394_capture_setup(mCamera, 4, DC1394_CAPTURE_FLAGS_DEFAULT);
 
     dc1394_feature_set_mode(mCamera, DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_AUTO);
-
     dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
-
     dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
+    dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_AUTO);
+    dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_AUTO);
 
     dc1394_video_set_transmission(mCamera, DC1394_ON);
 
@@ -67,6 +67,105 @@ void Camera::stopVideoCapture(){
 
 }
 
+
+void Camera::setShutterMode( bool aManual ){
+
+    if( isValid() ){
+        if( aManual ){
+            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_MANUAL);
+        } else {
+            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
+        }
+    }
+
+}
+void Camera::setShutter( int aShutterTime ){
+
+    if( isValid() ){
+
+        dc1394_feature_set_value(mCamera, DC1394_FEATURE_SHUTTER, aShutterTime);
+
+    }
+
+}
+
+int Camera::getShutter(){
+
+    unsigned int vValue = 0;
+    if( isValid() ){
+        dc1394_feature_get_value(mCamera, DC1394_FEATURE_SHUTTER, &vValue);
+
+    }
+    return vValue;
+
+}
+
+
+void Camera::setGainMode( bool aManual ){
+
+    if( isValid() ){
+        if( aManual ){
+            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_MANUAL);
+        } else {
+            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
+        }
+    }
+
+}
+void Camera::setGain( int aGain ){
+
+    if( isValid() ){
+
+        dc1394_feature_set_value(mCamera, DC1394_FEATURE_GAIN, aGain );
+
+    }
+
+}
+
+int Camera::getGain(){
+
+    unsigned int vValue = 0;
+    if( isValid() ){
+        dc1394_feature_get_value(mCamera, DC1394_FEATURE_GAIN, &vValue);
+
+    }
+    return vValue;
+
+}
+
+
+void Camera::setGammaMode( bool aManual ){
+
+    if( isValid() ){
+        if( aManual ){
+            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_MANUAL);
+        } else {
+            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_AUTO);
+        }
+    }
+
+}
+void Camera::setGamma( int aGamma ){
+
+    if( isValid() ){
+
+        dc1394_feature_set_value(mCamera, DC1394_FEATURE_GAMMA, aGamma );
+
+    }
+
+}
+
+int Camera::getGamma(){
+
+    unsigned int vValue = 0;
+    if( isValid() ){
+        dc1394_feature_get_value(mCamera, DC1394_FEATURE_GAMMA, &vValue);
+
+    }
+    return vValue;
+
+}
+
 bool Camera::isValid(){
 
     return mCamera!=nullptr;
@@ -97,8 +196,8 @@ void Camera::calculateBotPositions( const std::vector<aruco::Marker>& aListOfMar
         cv::Point2f vPoint = vMarker[1] - vMarker[2];
         vBots.append( mrvision::Bot(
                 vMarker.id,
-                ((mLRMultiplier*(mUpperY - mLowerY)) + vMarker.getCenter().y - mLowerY) / (2*(mUpperY - mLowerY)+1),
-                ((mULMultiplier*(mUpperX - mLowerX)) + vMarker.getCenter().x - mLowerX) / (2*(mUpperX - mLowerX)+1),
+                ((mULMultiplier*(mUpperX - mLowerX)) + vMarker.getCenter().y - mLowerX) / (2*(mUpperX - mLowerX)),
+                ((mLRMultiplier*(mUpperY - mLowerY)) + vMarker.getCenter().x - mLowerY) / (mUpperY - mLowerY),
                 atan2( vPoint.x, vPoint.y) * 180 / PI) );
         emit detectedBot(vMarker.id);
     }

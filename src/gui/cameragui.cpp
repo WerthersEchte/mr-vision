@@ -13,6 +13,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QValidator>
+#include <QJsonObject>
 
 #include <aruco/aruco.h>
 
@@ -26,14 +27,20 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi(new Ui::Camera),
     mCamera(aCamera),
     mDetector(new DetectorSimple()),
-    mKnownMarkers()
+    mKnownMarkers(),
+    mActiveInterface(true)
 {
     mUi->setupUi(this);
 
     mUi->lblName->setText( QString::number( mCamera->getId() ) );
+    connect( mUi->pBActivateControls, SIGNAL( clicked( bool ) ), this, SLOT( showInterface( bool ) ) );
+
     mUi->lEMarkerSize->setText( QString::number( mDetector->getMarkerSize() ) );
 
-    QValidator *vValidator = new QIntValidator(0, std::numeric_limits<int>::max(), this);
+    mUi->wCont2->hide();
+    mUi->wCont3->hide();
+
+    QValidator *vValidator = new QIntValidator(std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), this);
 
     mUi->lELeftBorder->setValidator( vValidator );
     mUi->lERightBorder->setValidator( vValidator );
@@ -43,12 +50,40 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->lELROffset->setValidator( vValidator );
     mUi->lEPointsperClick->setValidator( vValidator );
 
+    mUi->lEShutter->setValidator( vValidator );
+
     vValidator = new QDoubleValidator( 0.0, 100.0, 5, this);
     mUi->lEMarkerSize->setValidator( vValidator );
 
+    mUi->hSShutter->setValue( mCamera->getShutter() );
+    mUi->hSShutter->setTracking( false );
+    mUi->lEShutter->setText( QString::number(mCamera->getShutter()) );
+    connect( mUi->gBShutter, SIGNAL( clicked( bool ) ), mCamera, SLOT( setShutterMode( bool ) ) );
+    connect( mUi->hSShutter, SIGNAL( valueChanged( int ) ), mCamera, SLOT( setShutter( int ) ) );
+    connect( mUi->hSShutter, SIGNAL( valueChanged( int ) ), this, SLOT( setlEShutter( int ) ) );
+    connect( mUi->lEShutter, SIGNAL( editingFinished( ) ), this, SLOT( setShutter( ) ) );
+
+    mUi->hSGain->setValue( mCamera->getGain() );
+    mUi->hSGain->setTracking( false );
+    mUi->lEGain->setText( QString::number(mCamera->getGain()) );
+    connect( mUi->gBGain, SIGNAL( clicked( bool ) ), mCamera, SLOT( setGainMode( bool ) ) );
+    connect( mUi->hSGain, SIGNAL( valueChanged( int ) ), mCamera, SLOT( setGain( int ) ) );
+    connect( mUi->hSGain, SIGNAL( valueChanged( int ) ), this, SLOT( setlEGain( int ) ) );
+    connect( mUi->lEGain, SIGNAL( editingFinished( ) ), this, SLOT( setGain( ) ) );
+
+    mUi->hSGamma->setValue( mCamera->getGamma() );
+    mUi->hSGamma->setTracking( false );
+    mUi->lEGamma->setText( QString::number(mCamera->getGamma()) );
+    connect( mUi->gBGamma, SIGNAL( clicked( bool ) ), mCamera, SLOT( setGammaMode( bool ) ) );
+    connect( mUi->hSGamma, SIGNAL( valueChanged( int ) ), mCamera, SLOT( setGamma( int ) ) );
+    connect( mUi->hSGamma, SIGNAL( valueChanged( int ) ), this, SLOT( setlEGamma( int ) ) );
+    connect( mUi->lEGamma, SIGNAL( editingFinished( ) ), this, SLOT( setGamma( ) ) );
+
     connect( mUi->cBActive, SIGNAL( clicked( bool ) ), this, SLOT( detectBots( bool ) ) );
     connect( mUi->gBMarker, SIGNAL( clicked( bool ) ), this, SLOT( showMarker( bool ) ) );
-    connect( mUi->grpBCameraStream, SIGNAL( clicked( bool ) ), this, SLOT( startStreamingVideo( bool ) ) );
+    connect( mUi->gBDetection, SIGNAL( clicked( bool ) ), this, SLOT( showDetection( bool ) ) );
+    connect( mUi->gBCameraData, SIGNAL( clicked( bool ) ), this, SLOT( showCameraData( bool ) ) );
+    connect( mUi->gBCameraStream, SIGNAL( clicked( bool ) ), this, SLOT( startStreamingVideo( bool ) ) );
     connect( this, SIGNAL( newPicture( QPixmap ) ), this, SLOT( paintPicture( QPixmap ) ) );
 
     qRegisterMetaType< std::vector<aruco::Marker> >("std::vector<aruco::Marker>");
@@ -88,6 +123,8 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     }
     mUi->gBMarker->setLayout( vLayout );
 
+    connect(mUi->pBSaveCameraConfig, SIGNAL( clicked( bool ) ), this, SLOT( saveCameraGuiConfig( bool ) ) );
+
 }
 
 CameraGui::~CameraGui() {
@@ -101,6 +138,117 @@ CameraGui::~CameraGui() {
     delete mUi;
     delete mCamera;
     delete mDetector;
+
+}
+
+void CameraGui::saveCameraGuiConfig( bool aDummy )
+{
+    QFile saveFile( QFileDialog::getSaveFileName(this, tr("Select CameraGuiConfig"), "", tr("CameraGuiConfig Files (*.json);;All Files (*.*)")));
+
+    if (!saveFile.open(QIODevice::WriteOnly)) {
+        qWarning("Couldn't open save file.");
+        return;
+    }
+
+    QJsonObject vCameraConfigData;
+
+    vCameraConfigData["CameraGUID"] = static_cast<qint64>(mCamera->getId());
+
+    QJsonDocument saveDoc(vCameraConfigData);
+    saveFile.write(saveDoc.toJson());
+
+}
+
+void CameraGui::loadCameraGuiConfig( bool aDummy )
+{
+
+}
+
+void CameraGui::setlEShutter( int aValue ){
+
+    mUi->lEShutter->setText( QString::number( aValue ) );
+
+}
+
+void CameraGui::setShutter( ){
+
+    mCamera->setShutter( mUi->lEShutter->text().toInt() );
+
+}
+
+void CameraGui::setlEGain( int aValue ){
+
+    mUi->lEGain->setText( QString::number( aValue ) );
+
+}
+
+void CameraGui::setGain( ){
+
+    mCamera->setGain( mUi->lEGain->text().toInt() );
+
+}
+
+void CameraGui::setlEGamma( int aValue ){
+
+    mUi->lEGamma->setText( QString::number( aValue ) );
+
+}
+
+void CameraGui::setGamma( ){
+
+    mCamera->setGamma( mUi->lEGamma->text().toInt() );
+
+}
+
+void CameraGui::showInterface( bool aDummy ){
+
+    if( mActiveInterface ){
+
+        mActiveInterface = false;
+        mUi->gBDetection->hide();
+        mUi->gBMarker->hide();
+        mUi->gBCameraData->hide();
+        mUi->gBCameraStream->hide();
+
+    } else {
+
+        mActiveInterface = true;
+        mUi->gBDetection->show();
+        mUi->gBMarker->show();
+        mUi->gBCameraData->show();
+        mUi->gBCameraStream->show();
+
+    }
+
+}
+
+void CameraGui::showDetection( bool aShow ){
+
+    if( aShow ){
+
+        mUi->wCont->show();
+
+    } else {
+
+        mUi->wCont->hide();
+
+    }
+
+}
+
+void CameraGui::showCameraData( bool aShow ){
+
+    if( aShow ){
+
+        mUi->gBBorders->show();
+        mUi->gBFeatures->show();
+
+    } else {
+
+        mUi->gBBorders->hide();
+        mUi->gBFeatures->hide();
+
+    }
 
 }
 
@@ -185,9 +333,15 @@ void CameraGui::startStreamingVideo( bool aStreaming ){
             mCamera->startVideoCapture();
         }
 
+        mUi->wCont2->show();
+        mUi->wCont3->show();
+
     } else {
 
         disconnect( mCamera, &Camera::newVideoFrame, this, &CameraGui::streamVideo );
+
+        mUi->wCont2->hide();
+        mUi->wCont3->hide();
 
     }
 
@@ -201,7 +355,7 @@ void CameraGui::streamVideo( const cv::Mat& aVideoFrame ){
 
 void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
 
-    if( mUi->grpBCameraStream->isChecked() ){
+    if( mUi->gBCameraStream->isChecked() ){
 
         QPixmap vPixmap;
 

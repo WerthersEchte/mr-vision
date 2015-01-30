@@ -33,6 +33,10 @@ public:
     void startVideoCapture();
     void stopVideoCapture();
 
+    int getShutter();
+    int getGain();
+    int getGamma();
+
     bool isValid();
 
     uint64_t getId();
@@ -41,6 +45,13 @@ public:
 
 public slots:
     void decodeBotPositions( const std::vector<aruco::Marker>& aListOfMarkers );
+
+    void setShutterMode( bool aManual = true );
+    void setShutter( int aShutterTime = 400 );
+    void setGainMode( bool aManual = true );
+    void setGain( int aGain = 400 );
+    void setGammaMode( bool aManual = true );
+    void setGamma( int aGain = 400 );
 
 signals:
     void newVideoFrame( const cv::Mat& aPicture );

@@ -27,14 +27,21 @@ class CameraGui : public QWidget
 
 	QList<MarkerGui*> mKnownMarkers;
 
+	bool mActiveInterface;
+
 public:
     explicit CameraGui( Camera *aCamera, QWidget *aParent = 0 );
     ~CameraGui();
 
 private slots:
+    void showInterface( bool aDummy );
+
     void detectBots( bool aActivateDetection = false );
     void startStreamingVideo( bool aStreaming = false );
+
     void showMarker( bool aShow = false );
+    void showDetection( bool aShow = false );
+    void showCameraData( bool aShow = false );
 
     void paintPicture(const QPixmap &aPicture);
 
@@ -49,6 +56,16 @@ private slots:
     void pushRight( bool aDummy );
 
     void setBorderData();
+
+    void setlEShutter( int aValue );
+    void setShutter( );
+    void setlEGain( int aValue );
+    void setGain( );
+    void setlEGamma( int aValue );
+    void setGamma( );
+
+    void saveCameraGuiConfig( bool aDummy );
+    void loadCameraGuiConfig( bool aDummy );
 
 public slots:
     void streamVideo( const cv::Mat& aVideoFrame );
