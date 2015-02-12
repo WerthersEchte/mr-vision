@@ -143,19 +143,19 @@ CameraGui::~CameraGui() {
 
 void CameraGui::saveCameraGuiConfig( bool aDummy )
 {
-    QFile saveFile( QFileDialog::getSaveFileName(this, tr("Select CameraGuiConfig"), "", tr("CameraGuiConfig Files (*.json);;All Files (*.*)")));
+    QFile vFile( QFileDialog::getSaveFileName(this, tr("Select CameraGuiConfig"), "", tr("CameraGuiConfig Files (*.json);;All Files (*.*)")));
 
-    if (!saveFile.open(QIODevice::WriteOnly)) {
+    if (!vFile.open(QIODevice::WriteOnly)) {
         qWarning("Couldn't open save file.");
         return;
     }
 
     QJsonObject vCameraConfigData;
 
-    vCameraConfigData["CameraGUID"] = static_cast<qint64>(mCamera->getId());
+    vCameraConfigData["CameraGUID"] = QString::number(mCamera->getId());
 
-    QJsonDocument saveDoc(vCameraConfigData);
-    saveFile.write(saveDoc.toJson());
+    QJsonDocument vJsonDoc(vCameraConfigData);
+    vFile.write(vJsonDoc.toJson());
 
 }
 

@@ -4,8 +4,8 @@
 
 namespace mrvision {
 
-Marker::Marker( std::vector<bool> aMarker, int aId )
-:	mId(aId)
+Marker::Marker( std::vector<bool> aMarker, int aId, int aWidth, int aHeight )
+:	mId(aId), mWidth(aWidth), mHeight(aHeight)
 {
 	mNumberOfTrues = countTrues( aMarker );
 
@@ -62,6 +62,18 @@ bool Marker::compareTo( std::vector<bool> aRealMarker, int &aRotations ){
 int Marker::getId() const{
 
 	return mId;
+
+};
+
+int Marker::getWidth() const{
+
+	return mWidth;
+
+};
+
+int Marker::getHeight() const{
+
+	return mHeight;
 
 };
 

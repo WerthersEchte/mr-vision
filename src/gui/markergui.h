@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include <QThread>
+#include <QBrush>
+#include <QPaintEvent>
 #include "src/core/marker.h"
 
 namespace Ui {
@@ -15,9 +17,11 @@ class MarkerGui : public QWidget
 {
 	Q_OBJECT
 
-	int mMarkerId;
+	Marker mMarker;
+
 	Ui::Marker *mUi;
 	QPalette mBorderBlack, mBorderRed;
+	QBrush mBlack, mWhite;
 
 	bool mIsBlinking;
 
@@ -32,6 +36,8 @@ public slots:
 
 private:
     void delay();
+protected:
+    void paintEvent(QPaintEvent *event);
 
 };
 

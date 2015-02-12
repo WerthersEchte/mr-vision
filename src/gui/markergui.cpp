@@ -4,6 +4,8 @@
 #include <iostream>
 
 #include <QTime>
+#include <QPainter>
+#include <QColor>
 
 namespace mrvision {
 
@@ -12,39 +14,22 @@ MarkerGui::MarkerGui( const Marker& aMarker, QWidget *aParent ) :
     mUi(new Ui::Marker),
     mIsBlinking(false),
     mBorderBlack(),
-    mBorderRed()
+    mBorderRed(),
+    mBlack(QColor(Qt::black)),
+    mWhite(QColor(Qt::white)),
+    mMarker(aMarker)
 {
 
     mUi->setupUi(this);
     this->setMaximumWidth(76);
     mUi->fMarker->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 
-    mMarkerId = aMarker.getId();
-    std::vector<bool> vMaker = aMarker.getMakerRotation();
-
     mBorderRed.setColor(QPalette::Light, QColor(Qt::red));
     mBorderRed.setColor(QPalette::Dark, QColor(Qt::red));
 
-    QPalette vPaletteBlack = mUi->lbl1->palette(), vPaletteWhite = mUi->lbl1->palette();
-    vPaletteBlack.setColor(QPalette::Window, QColor(Qt::black));
-    vPaletteBlack.setColor(QPalette::WindowText, QColor(Qt::white));
-    vPaletteWhite.setColor(QPalette::Window, QColor(Qt::white));
-    vPaletteWhite.setColor(QPalette::WindowText, QColor(Qt::black));
+    //mUi->lbl5->setText( QString::number( mMarkerId ) );
 
-    mUi->lbl5->setText( QString::number( mMarkerId ) );
-
-    mUi->lbl1->setPalette( vMaker.at(0) ? vPaletteWhite : vPaletteBlack );
-    mUi->lbl2->setPalette( vMaker.at(1) ? vPaletteWhite : vPaletteBlack );
-    mUi->lbl3->setPalette( vMaker.at(2) ? vPaletteWhite : vPaletteBlack );
-    mUi->lbl4->setPalette( vMaker.at(3) ? vPaletteWhite : vPaletteBlack );
-    mUi->lbl5->setPalette( vMaker.at(4) ? vPaletteWhite : vPaletteBlack );
-    mUi->lbl6->setPalette( vMaker.at(5) ? vPaletteWhite : vPaletteBlack );
-    mUi->lbl7->setPalette( vMaker.at(6) ? vPaletteWhite : vPaletteBlack );
-    mUi->lbl8->setPalette( vMaker.at(7) ? vPaletteWhite : vPaletteBlack );
-    mUi->lbl9->setPalette( vMaker.at(8) ? vPaletteWhite : vPaletteBlack );
-
-
-
+    repaint();
 }
 
 MarkerGui::~MarkerGui() {
@@ -53,16 +38,40 @@ MarkerGui::~MarkerGui() {
 
 }
 
+void MarkerGui::paintEvent(QPaintEvent *event)
+{
+
+    QPainter painter;
+    painter.begin(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    for( int vHeight = 0; vHeight < mMarker.getHeight(); ++vHeight ){
+
+        for( int vWidth = 0; vWidth < mMarker.getWidth(); ++vWidth ){
+
+            painter.fillRect( QRect( 4 + 66 / mMarker.getWidth() * vWidth, 4 + 66 / mMarker.getHeight() * vHeight,
+                                     66 / mMarker.getHeight(), 66 / mMarker.getHeight() ),
+                              mMarker.getMakerRotation().at( mMarker.getWidth() * vHeight + vWidth ) ? mWhite : mBlack);
+
+        }
+
+    }
+
+    painter.setPen(QPen(Qt::red));
+    painter.drawText(rect(), Qt::AlignCenter, QString::number( mMarker.getId() ) );
+    painter.end();
+}
+
 int MarkerGui::getId() {
 
-    return mMarkerId;
+    return mMarker.getId();
 
 }
 
 
 void MarkerGui::blink( int aId ){
 
-    if( aId == mMarkerId && !mIsBlinking ){
+    if( aId == mMarker.getId() && !mIsBlinking ){
 
         mIsBlinking = true;
         mUi->fMarker->setFrameStyle( QFrame::Panel | QFrame::Raised );

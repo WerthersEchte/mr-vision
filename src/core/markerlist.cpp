@@ -7,7 +7,7 @@ namespace mrvision {
 MarkerList::MarkerList() :
 		mMarker()
 {
-
+/*
 	mMarker.push_back( Marker( std::vector<bool>{true,false,true,false,false,false,false,false,true}, 1 ) );
 	mMarker.push_back( Marker( std::vector<bool>{true,true,true,false,false,false,false,false,true}, 2 ) );
 	mMarker.push_back( Marker( std::vector<bool>{true,false,true,false,false,true,false,false,true}, 3 ) );
@@ -40,6 +40,13 @@ MarkerList::MarkerList() :
 	mMarker.push_back( Marker( std::vector<bool>{true,true,true,false,true,true,false,true,true}, 30 ) );
 	mMarker.push_back( Marker( std::vector<bool>{true,false,true,true,true,true,false,true,true}, 31 ) );
 	mMarker.push_back( Marker( std::vector<bool>{true,true,true,true,true,true,false,true,true}, 32 ) );
+	*/
+	mMarker.push_back( Marker( std::vector<bool>{true,true,true,true}, 1, 2, 2 ) );
+	mMarker.push_back( Marker( std::vector<bool>{false,true,true,true}, 2, 2, 2 ) );
+	mMarker.push_back( Marker( std::vector<bool>{false,false,true,true}, 3, 2, 2 ) );
+	mMarker.push_back( Marker( std::vector<bool>{false,false,false,true}, 4, 2, 2 ) );
+	mMarker.push_back( Marker( std::vector<bool>{false,false,false,false}, 5, 2, 2 ) );
+	mMarker.push_back( Marker( std::vector<bool>{false,true,true,false}, 6, 2, 2 ) );
 };
 
 MarkerList::~MarkerList(){
