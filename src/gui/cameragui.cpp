@@ -522,14 +522,14 @@ void CameraGui::startStreamingMarker( bool aStreaming ){
         qRegisterMetaType< cv::Mat >("cv::Mat");
         //qRegisterMetaType< std::vector<bool> >("std::vector<bool>");
 
-        connect( mCamera, SIGNAL( showMarkerAndImage( cv::Mat, std::vector<bool> ) ), this, SLOT( streamFoundMarkers( cv::Mat, std::vector<bool> ) ) );
+        connect( mDetector, SIGNAL( showMarkerAndImage( cv::Mat, std::vector<bool> ) ), this, SLOT( streamFoundMarkers( cv::Mat, std::vector<bool> ) ) );
 
         mUi->lblMarkerImage->show();
         mUi->lblMarkerDetect->show();
 
     } else {
 
-        disconnect( mCamer, &Detector::showMarkerAndImage, this, &CameraGui::streamFoundMarkers );
+        disconnect( mDetector, &Detector::showMarkerAndImage, this, &CameraGui::streamFoundMarkers );
 
         mUi->lblMarkerImage->hide();
         mUi->lblMarkerDetect->hide();
