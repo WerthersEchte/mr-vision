@@ -4,6 +4,7 @@
 #include "src/core/bot.h"
 
 #include <dc1394/dc1394.h>
+#include <dc1394/control.h>
 #include <QList>
 #include "opencv2/opencv.hpp"
 #include <aruco/aruco.h>
@@ -36,6 +37,12 @@ public:
     int getShutter();
     int getGain();
     int getGamma();
+    int getSharpness();
+
+    void getShutterMinMax( unsigned int* aMin, unsigned int* aMax );
+    void getGainMinMax( unsigned int* aMin, unsigned int* aMax );
+    void getGammaMinMax( unsigned int* aMin, unsigned int* aMax );
+    void getSharpnessMinMax( unsigned int* aMin, unsigned int* aMax );
 
     bool isValid();
 
@@ -51,7 +58,9 @@ public slots:
     void setGainMode( bool aManual = true );
     void setGain( int aGain = 400 );
     void setGammaMode( bool aManual = true );
-    void setGamma( int aGain = 400 );
+    void setGamma( int aGamma = 400 );
+    void setSharpnessMode( bool aManual = true );
+    void setSharpness( int aSharpness = 400 );
 
 signals:
     void newVideoFrame( const cv::Mat& aPicture );
@@ -61,6 +70,8 @@ signals:
 private:
     void run();
     void calculateBotPositions( const std::vector<aruco::Marker>& aListOfMarkers );
+
+    void getFeatureMinMax( dc1394feature_t aFeature, unsigned int* aMin, unsigned int* aMax );
 
 };
 

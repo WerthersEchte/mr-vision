@@ -29,6 +29,7 @@ public slots:
 
 signals:
     void markersDetected( const std::vector<aruco::Marker>& aListOfMarkers );
+    void showMarkerAndImage( const cv::Mat& aImage, const std::vector<bool>& aMarker );
 
 };
 

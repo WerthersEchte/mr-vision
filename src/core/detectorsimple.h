@@ -10,8 +10,11 @@
 namespace mrvision {
 
 static MarkerList MARKERLIST;
+static int THRESHOLD = 128;
 
 class DetectorSimple : public Detector{
+
+    Q_OBJECT
 
     aruco::CameraParameters mCameraParameters;
     aruco::MarkerDetector mDetector;

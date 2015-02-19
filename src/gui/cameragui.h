@@ -27,7 +27,7 @@ class CameraGui : public QWidget
 
 	QList<MarkerGui*> mKnownMarkers;
 
-	bool mActiveInterface;
+	bool mActiveInterface, mTakeScreenshot;
 
 public:
     explicit CameraGui( Camera *aCamera, QWidget *aParent = 0 );
@@ -36,19 +36,24 @@ public:
 private slots:
     void showInterface( bool aDummy );
 
+    void takeScreenshot( bool aScreenshot = false );
     void detectBots( bool aActivateDetection = false );
     void startStreamingVideo( bool aStreaming = false );
+    void startStreamingMarker( bool aStreaming = false );
 
     void showMarker( bool aShow = false );
     void showDetection( bool aShow = false );
     void showCameraData( bool aShow = false );
 
     void paintPicture(const QPixmap &aPicture);
+    void paintMarkerPicture(const QPixmap &aMarkerPic,const QPixmap &aFoundMarker);
 
     void setCameraFile();
     void setMarkerSize();
 
     void selectCameraFile( bool aDummy );
+    void setlEThreshold( int aValue );
+    void setThreshold( );
 
     void pushUp( bool aDummy );
     void pushDown( bool aDummy );
@@ -63,18 +68,23 @@ private slots:
     void setGain( );
     void setlEGamma( int aValue );
     void setGamma( );
+    void setlESharpness( int aValue );
+    void setSharpness( );
 
     void saveCameraGuiConfig( bool aDummy );
     void loadCameraGuiConfig( bool aDummy );
 
 public slots:
     void streamVideo( const cv::Mat& aVideoFrame );
+    void streamFoundMarkers( const cv::Mat& aImage, const std::vector<bool>& aMarker );
 
 signals:
     void newPicture( const QPixmap & );
+    void newMarkerPixs(const QPixmap &aMarkerPic,const QPixmap &aFoundMarker);
 
 private:
     void createPictureFromVideoframe( const cv::Mat& aVideoFrame );
+    void createMarkerPictures( const cv::Mat& aImage, const std::vector<bool>& aMarker );
 
 };
 

@@ -3,6 +3,7 @@
 #include "iostream"
 
 #include <QtConcurrent/QtConcurrent>
+#include "opencv2/opencv.hpp"
 
 namespace mrvision {
 
@@ -76,7 +77,8 @@ void DetectorSimple::detectMarkers( const cv::Mat& aImage ){
 
 int DetectorSimple::identifyMarker( const cv::Mat &in, int &nRotations ){
 
-    cv::Mat vBWMarker = in > 128;
+    cv::Mat vBWMarker = in > THRESHOLD;
+
     cv::Mat vPart;
 	nRotations = 0;
     int width=vBWMarker.size().width / 5,

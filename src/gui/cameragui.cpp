@@ -14,6 +14,7 @@
 #include <QFile>
 #include <QValidator>
 #include <QJsonObject>
+#include <QMessageLogger>
 
 #include <aruco/aruco.h>
 
@@ -28,17 +29,20 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mCamera(aCamera),
     mDetector(new DetectorSimple()),
     mKnownMarkers(),
-    mActiveInterface(true)
+    mActiveInterface(true),
+    mTakeScreenshot(false)
 {
     mUi->setupUi(this);
 
     mUi->lblName->setText( QString::number( mCamera->getId() ) );
+    mUi->lEScreenshotName->setText( QString::number(mCamera->getId()) + "_" );
     connect( mUi->pBActivateControls, SIGNAL( clicked( bool ) ), this, SLOT( showInterface( bool ) ) );
 
     mUi->lEMarkerSize->setText( QString::number( mDetector->getMarkerSize() ) );
 
     mUi->wCont2->hide();
     mUi->wCont3->hide();
+    mUi->wCont6->hide();
 
     QValidator *vValidator = new QIntValidator(std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), this);
 
@@ -50,34 +54,66 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->lELROffset->setValidator( vValidator );
     mUi->lEPointsperClick->setValidator( vValidator );
 
-    mUi->lEShutter->setValidator( vValidator );
+    mUi->lEScreenshotNumber->setValidator( vValidator );
 
     vValidator = new QDoubleValidator( 0.0, 100.0, 5, this);
     mUi->lEMarkerSize->setValidator( vValidator );
 
+
+    mUi->hSThreshold->setValue( mrvision::THRESHOLD );
+    mUi->lEThreshold->setText( QString::number( mrvision::THRESHOLD ) );
+    connect( mUi->hSThreshold, SIGNAL( valueChanged( int ) ), this, SLOT( setlEThreshold( int ) ) );
+    connect( mUi->lEThreshold, SIGNAL( editingFinished( ) ), this, SLOT( setThreshold( ) ) );
+
+    unsigned int vMin, vMax;
+
+    mCamera->getShutterMinMax( &vMin, &vMax );
+    mUi->hSShutter->setMinimum( vMin );
+    mUi->hSShutter->setMaximum( vMax );
     mUi->hSShutter->setValue( mCamera->getShutter() );
     mUi->hSShutter->setTracking( false );
+    mUi->lEShutter->setValidator( new QIntValidator( vMin, vMax, this) );
     mUi->lEShutter->setText( QString::number(mCamera->getShutter()) );
     connect( mUi->gBShutter, SIGNAL( clicked( bool ) ), mCamera, SLOT( setShutterMode( bool ) ) );
     connect( mUi->hSShutter, SIGNAL( valueChanged( int ) ), mCamera, SLOT( setShutter( int ) ) );
     connect( mUi->hSShutter, SIGNAL( valueChanged( int ) ), this, SLOT( setlEShutter( int ) ) );
     connect( mUi->lEShutter, SIGNAL( editingFinished( ) ), this, SLOT( setShutter( ) ) );
 
+    mCamera->getGainMinMax( &vMin, &vMax );
+    mUi->hSGain->setMinimum( vMin );
+    mUi->hSGain->setMaximum( vMax );
     mUi->hSGain->setValue( mCamera->getGain() );
     mUi->hSGain->setTracking( false );
+    mUi->lEGain->setValidator( new QIntValidator( vMin, vMax, this) );
     mUi->lEGain->setText( QString::number(mCamera->getGain()) );
     connect( mUi->gBGain, SIGNAL( clicked( bool ) ), mCamera, SLOT( setGainMode( bool ) ) );
     connect( mUi->hSGain, SIGNAL( valueChanged( int ) ), mCamera, SLOT( setGain( int ) ) );
     connect( mUi->hSGain, SIGNAL( valueChanged( int ) ), this, SLOT( setlEGain( int ) ) );
     connect( mUi->lEGain, SIGNAL( editingFinished( ) ), this, SLOT( setGain( ) ) );
 
+    mCamera->getGammaMinMax( &vMin, &vMax );
+    mUi->hSGamma->setMinimum( vMin );
+    mUi->hSGamma->setMaximum( vMax );
     mUi->hSGamma->setValue( mCamera->getGamma() );
     mUi->hSGamma->setTracking( false );
+    mUi->lEGamma->setValidator( new QIntValidator( vMin, vMax, this) );
     mUi->lEGamma->setText( QString::number(mCamera->getGamma()) );
     connect( mUi->gBGamma, SIGNAL( clicked( bool ) ), mCamera, SLOT( setGammaMode( bool ) ) );
     connect( mUi->hSGamma, SIGNAL( valueChanged( int ) ), mCamera, SLOT( setGamma( int ) ) );
     connect( mUi->hSGamma, SIGNAL( valueChanged( int ) ), this, SLOT( setlEGamma( int ) ) );
     connect( mUi->lEGamma, SIGNAL( editingFinished( ) ), this, SLOT( setGamma( ) ) );
+
+    mCamera->getSharpnessMinMax( &vMin, &vMax );
+    mUi->hSSharpness->setMinimum( vMin );
+    mUi->hSSharpness->setMaximum( vMax );
+    mUi->hSSharpness->setValue( mCamera->getSharpness() );
+    mUi->hSSharpness->setTracking( false );
+    mUi->lESharpness->setValidator( new QIntValidator( vMin, vMax, this) );
+    mUi->lESharpness->setText( QString::number(mCamera->getSharpness()) );
+    connect( mUi->gBSharpness, SIGNAL( clicked( bool ) ), mCamera, SLOT( setSharpnessMode( bool ) ) );
+    connect( mUi->hSSharpness, SIGNAL( valueChanged( int ) ), mCamera, SLOT( setSharpness( int ) ) );
+    connect( mUi->hSSharpness, SIGNAL( valueChanged( int ) ), this, SLOT( setlESharpness( int ) ) );
+    connect( mUi->lESharpness, SIGNAL( editingFinished( ) ), this, SLOT( setSharpness( ) ) );
 
     connect( mUi->cBActive, SIGNAL( clicked( bool ) ), this, SLOT( detectBots( bool ) ) );
     connect( mUi->gBMarker, SIGNAL( clicked( bool ) ), this, SLOT( showMarker( bool ) ) );
@@ -124,6 +160,19 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->gBMarker->setLayout( vLayout );
 
     connect(mUi->pBSaveCameraConfig, SIGNAL( clicked( bool ) ), this, SLOT( saveCameraGuiConfig( bool ) ) );
+    connect(mUi->pBLoadCameraConfig, SIGNAL( clicked( bool ) ), this, SLOT( loadCameraGuiConfig( bool ) ) );
+
+    connect( this, SIGNAL( newMarkerPixs( QPixmap, QPixmap ) ), this, SLOT( paintMarkerPicture( QPixmap, QPixmap ) ) );
+    connect( mUi->gBMarkerDetectedPictures, SIGNAL( clicked( bool ) ), this, SLOT( startStreamingMarker( bool ) ) );
+
+    connect( mUi->pBScreenshot, SIGNAL( clicked( bool ) ), this, SLOT( takeScreenshot( bool ) ) );
+
+    vLayout = new FlowLayout();
+    vLayout->addWidget( mUi->gBShutter );
+    vLayout->addWidget( mUi->gBGain );
+    vLayout->addWidget( mUi->gBGamma );
+    vLayout->addWidget( mUi->gBSharpness );
+    mUi->gBFeatures->setLayout( vLayout );
 
 }
 
@@ -145,14 +194,39 @@ void CameraGui::saveCameraGuiConfig( bool aDummy )
 {
     QFile vFile( QFileDialog::getSaveFileName(this, tr("Select CameraGuiConfig"), "", tr("CameraGuiConfig Files (*.json);;All Files (*.*)")));
 
-    if (!vFile.open(QIODevice::WriteOnly)) {
+    if ( !vFile.open(QIODevice::WriteOnly)) {
         qWarning("Couldn't open save file.");
         return;
     }
 
-    QJsonObject vCameraConfigData;
+    QJsonObject vCameraConfigData, vDetectionConfigData, vBorders, vFeatures;
+
+    vDetectionConfigData["CameraConfigFile"] = mUi->lECameraFile->text();
+    vDetectionConfigData["MarkerSize"] = mUi->lEMarkerSize->text();
+    vDetectionConfigData["Threshold"] = mUi->lEThreshold->text();
+
+    vBorders["ULBorderUpper"] = mUi->lEUpperBorder->text();
+    vBorders["ULBorderLower"] = mUi->lELowerBorder->text();
+    vBorders["ULBorderOffset"] = mUi->lEULOffset->text();
+    vBorders["LRBorderLeft"] = mUi->lELeftBorder->text();
+    vBorders["LRBorderRight"] = mUi->lERightBorder->text();
+    vBorders["LRBorderOffset"] = mUi->lELROffset->text();
+
+    vFeatures["Shutter"] = mUi->gBShutter->isChecked();
+    vFeatures["ShutterValue"] = mUi->lEShutter->text();
+    vFeatures["Gain"] = mUi->gBGain->isChecked();
+    vFeatures["GainValue"] = mUi->lEGain->text();
+    vFeatures["Gamma"] = mUi->gBGamma->isChecked();
+    vFeatures["GammaValue"] = mUi->lEGamma->text();
+    vFeatures["Sharpness"] = mUi->gBSharpness->isChecked();
+    vFeatures["SharpnessValue"] = mUi->lESharpness->text();
 
     vCameraConfigData["CameraGUID"] = QString::number(mCamera->getId());
+    vCameraConfigData["Detection"] = vDetectionConfigData;
+    vCameraConfigData["Borders"] = vBorders;
+    vCameraConfigData["Features"] = vFeatures;
+
+    vCameraConfigData["ScreenshotNumber"] = mUi->lEScreenshotNumber->text();
 
     QJsonDocument vJsonDoc(vCameraConfigData);
     vFile.write(vJsonDoc.toJson());
@@ -161,6 +235,78 @@ void CameraGui::saveCameraGuiConfig( bool aDummy )
 
 void CameraGui::loadCameraGuiConfig( bool aDummy )
 {
+
+    QFile vFile( QFileDialog::getOpenFileName(this, tr("Select CameraGuiConfig"), "", tr("CameraGuiConfig Files (*.json);;All Files (*.*)")));
+
+    if (!vFile.open(QIODevice::ReadOnly)) {
+        return;
+    }
+
+    QByteArray saveData = vFile.readAll();
+
+    QJsonDocument vSavedCamera( QJsonDocument::fromJson(saveData) );
+    QJsonObject vCameraConfigData( vSavedCamera.object() );
+
+    if( vCameraConfigData["CameraGUID"].toString().compare( QString::number(mCamera->getId()) ) ){
+
+        std::cout << "Not the same camera! (" << vCameraConfigData["CameraGUID"].toString().toStdString() << " != " << mCamera->getId() << ")" << std::endl;
+
+    }
+
+    QJsonObject vDetectionConfigData( vCameraConfigData["Detection"].toObject() ), vBorders( vCameraConfigData["Borders"].toObject() ), vFeatures( vCameraConfigData["Features"].toObject() );
+
+    mUi->lEScreenshotNumber->setText( vCameraConfigData["ScreenshotNumber"].toString() );
+
+    mUi->lECameraFile->setText( vDetectionConfigData["CameraConfigFile"].toString() );
+    mUi->lEMarkerSize->setText( vDetectionConfigData["MarkerSize"].toString() );
+    mUi->lEThreshold->setText( vDetectionConfigData["Threshold"].toString() );
+
+    setCameraFile();
+    setThreshold();
+    setMarkerSize();
+
+    mUi->lEUpperBorder->setText( vBorders["ULBorderUpper"].toString() );
+    mUi->lELowerBorder->setText( vBorders["ULBorderLower"].toString() );
+    mUi->lEULOffset->setText( vBorders["ULBorderOffset"].toString() );
+    mUi->lELeftBorder->setText( vBorders["LRBorderLeft"].toString() );
+    mUi->lERightBorder->setText( vBorders["LRBorderRight"].toString() );
+    mUi->lELROffset->setText( vBorders["LRBorderOffset"].toString() );
+    setBorderData();
+
+    mUi->gBShutter->setChecked( vFeatures["Shutter"].toBool() );
+    mCamera->setShutterMode( vFeatures["Shutter"].toBool() );
+    mUi->lEShutter->setText( vFeatures["ShutterValue"].toString() );
+    setShutter();
+
+    mUi->gBGain->setChecked( vFeatures["Gain"].toBool() );
+    mCamera->setGainMode( vFeatures["Gain"].toBool() );
+    mUi->lEGain->setText( vFeatures["GainValue"].toString() );
+    setGain();
+
+    mUi->gBGamma->setChecked( vFeatures["Gamma"].toBool() );
+    mCamera->setGammaMode( vFeatures["Gamma"].toBool() );
+    mUi->lEGamma->setText( vFeatures["GammaValue"].toString() );
+    setGamma();
+
+    mUi->gBSharpness->setChecked( vFeatures["Sharpness"].toBool() );
+    mCamera->setSharpnessMode( vFeatures["Sharpness"].toBool() );
+    mUi->lESharpness->setText( vFeatures["SharpnessValue"].toString() );
+    setSharpness();
+
+    return;
+
+}
+
+void CameraGui::setlEThreshold( int aValue ){
+
+    mUi->lEThreshold->setText( QString::number( aValue ) );
+
+}
+
+void CameraGui::setThreshold( ){
+
+    mrvision::THRESHOLD = mUi->lEThreshold->text().toInt();
+    mUi->hSThreshold->setValue( mrvision::THRESHOLD );
 
 }
 
@@ -173,6 +319,7 @@ void CameraGui::setlEShutter( int aValue ){
 void CameraGui::setShutter( ){
 
     mCamera->setShutter( mUi->lEShutter->text().toInt() );
+    mUi->hSShutter->setValue( mUi->lEShutter->text().toInt() );
 
 }
 
@@ -185,6 +332,7 @@ void CameraGui::setlEGain( int aValue ){
 void CameraGui::setGain( ){
 
     mCamera->setGain( mUi->lEGain->text().toInt() );
+    mUi->hSGain->setValue( mUi->lEGain->text().toInt() );
 
 }
 
@@ -197,6 +345,20 @@ void CameraGui::setlEGamma( int aValue ){
 void CameraGui::setGamma( ){
 
     mCamera->setGamma( mUi->lEGamma->text().toInt() );
+    mUi->hSGamma->setValue( mUi->lEGamma->text().toInt() );
+
+}
+
+void CameraGui::setlESharpness( int aValue ){
+
+    mUi->lESharpness->setText( QString::number( aValue ) );
+
+}
+
+void CameraGui::setSharpness( ){
+
+    mCamera->setSharpness( mUi->lESharpness->text().toInt() );
+    mUi->hSSharpness->setValue( mUi->lESharpness->text().toInt() );
 
 }
 
@@ -227,10 +389,14 @@ void CameraGui::showDetection( bool aShow ){
     if( aShow ){
 
         mUi->wCont->show();
+        mUi->wCont4->show();
+        mUi->gBMarkerDetectedPictures->show();
 
     } else {
 
         mUi->wCont->hide();
+        mUi->wCont4->hide();
+        mUi->gBMarkerDetectedPictures->hide();
 
     }
 
@@ -335,6 +501,7 @@ void CameraGui::startStreamingVideo( bool aStreaming ){
 
         mUi->wCont2->show();
         mUi->wCont3->show();
+        mUi->wCont6->show();
 
     } else {
 
@@ -342,8 +509,68 @@ void CameraGui::startStreamingVideo( bool aStreaming ){
 
         mUi->wCont2->hide();
         mUi->wCont3->hide();
+        mUi->wCont6->hide();
 
     }
+
+}
+
+void CameraGui::startStreamingMarker( bool aStreaming ){
+
+    if( aStreaming ){
+
+        qRegisterMetaType< cv::Mat >("cv::Mat");
+        //qRegisterMetaType< std::vector<bool> >("std::vector<bool>");
+
+        connect( mCamera, SIGNAL( showMarkerAndImage( cv::Mat, std::vector<bool> ) ), this, SLOT( streamFoundMarkers( cv::Mat, std::vector<bool> ) ) );
+
+        mUi->lblMarkerImage->show();
+        mUi->lblMarkerDetect->show();
+
+    } else {
+
+        disconnect( mCamer, &Detector::showMarkerAndImage, this, &CameraGui::streamFoundMarkers );
+
+        mUi->lblMarkerImage->hide();
+        mUi->lblMarkerDetect->hide();
+
+    }
+
+}
+
+
+void CameraGui::streamFoundMarkers( const cv::Mat& aImage, const std::vector<bool>& aMarker ){
+
+    QtConcurrent::run(this, &CameraGui::createMarkerPictures, aImage, aMarker);
+
+}
+
+void CameraGui::createMarkerPictures( const cv::Mat& aImage, const std::vector<bool>& aMarker ){
+
+    if( mUi->gBMarkerDetectedPictures->isChecked() ){
+
+        QPixmap vPixmap;
+
+        QVector<QRgb> vColorTable;
+        for (int i=0; i<256; i++){
+            vColorTable.push_back(qRgb(i,i,i));
+        }
+
+        QImage img((const uchar*)aImage.data, aImage.cols, aImage.rows, aImage.step, QImage::Format_Indexed8);
+        img.setColorTable(vColorTable);
+
+        vPixmap = QPixmap::fromImage( img );
+
+        emit newMarkerPixs(vPixmap, vPixmap);
+
+    }
+
+}
+
+void CameraGui::paintMarkerPicture(const QPixmap &aMarkerPic,const QPixmap &aFoundMarker){
+
+    mUi->lblMarkerImage->setPixmap(aMarkerPic);
+    mUi->lblMarkerDetect->setPixmap(aFoundMarker);
 
 }
 
@@ -377,6 +604,13 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
         img.setColorTable(vColorTable);
 
         vPixmap = QPixmap::fromImage( img );
+
+        if( mTakeScreenshot ){
+            mTakeScreenshot = false;
+            vPixmap.save( QString( mUi->lEScreenshotName->text() + mUi->lEScreenshotNumber->text() + mUi->lEScreenshotEnding->text() ) );
+            mUi->lEScreenshotNumber->setText( QString("%1").arg( mUi->lEScreenshotNumber->text().toInt() + 1, 5, 10, QChar('0') ) );
+
+        }
 
         if( mUi->cBGridlines->isChecked() ){
 
@@ -449,6 +683,12 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
 void CameraGui::paintPicture(const QPixmap &aPicture){
 
     mUi->lblVideoStream->setPixmap(aPicture);
+
+}
+
+void CameraGui::takeScreenshot( bool aScreenshot ){
+
+    mTakeScreenshot = true;
 
 }
 

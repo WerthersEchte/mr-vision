@@ -1,5 +1,6 @@
 #include "camera.h"
 
+#include <stdio.h>
 #include "src/core/udp_server.h"
 #include <QtConcurrent/QtConcurrent>
 
@@ -67,6 +68,34 @@ void Camera::stopVideoCapture(){
 
 }
 
+void Camera::getShutterMinMax( unsigned int* aMin, unsigned int* aMax ){
+
+    getFeatureMinMax( DC1394_FEATURE_SHUTTER, aMin, aMax );
+
+}
+void Camera::getGainMinMax( unsigned int* aMin, unsigned int* aMax ){
+
+    getFeatureMinMax( DC1394_FEATURE_GAIN, aMin, aMax );
+
+}
+void Camera::getGammaMinMax( unsigned int* aMin, unsigned int* aMax ){
+
+    getFeatureMinMax( DC1394_FEATURE_GAMMA, aMin, aMax );
+
+}
+void Camera::getSharpnessMinMax( unsigned int* aMin, unsigned int* aMax ){
+
+    getFeatureMinMax( DC1394_FEATURE_SHARPNESS, aMin, aMax );
+
+}
+
+void Camera::getFeatureMinMax( dc1394feature_t aFeature, unsigned int* aMin, unsigned int* aMax ){
+
+    if( isValid() ){
+        dc1394_feature_get_boundaries( mCamera, aFeature, aMin, aMax );
+    }
+
+}
 
 void Camera::setShutterMode( bool aManual ){
 
@@ -79,6 +108,7 @@ void Camera::setShutterMode( bool aManual ){
     }
 
 }
+
 void Camera::setShutter( int aShutterTime ){
 
     if( isValid() ){
@@ -100,7 +130,6 @@ int Camera::getShutter(){
 
 }
 
-
 void Camera::setGainMode( bool aManual ){
 
     if( isValid() ){
@@ -112,6 +141,7 @@ void Camera::setGainMode( bool aManual ){
     }
 
 }
+
 void Camera::setGain( int aGain ){
 
     if( isValid() ){
@@ -160,6 +190,39 @@ int Camera::getGamma(){
     unsigned int vValue = 0;
     if( isValid() ){
         dc1394_feature_get_value(mCamera, DC1394_FEATURE_GAMMA, &vValue);
+
+    }
+    return vValue;
+
+}
+
+
+void Camera::setSharpnessMode( bool aManual ){
+
+    if( isValid() ){
+        if( aManual ){
+            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_MANUAL);
+        } else {
+            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_AUTO);
+        }
+    }
+
+}
+void Camera::setSharpness( int aSharpness ){
+
+    if( isValid() ){
+
+        dc1394_feature_set_value(mCamera, DC1394_FEATURE_SHARPNESS, aSharpness );
+
+    }
+
+}
+
+int Camera::getSharpness(){
+
+    unsigned int vValue = 0;
+    if( isValid() ){
+        dc1394_feature_get_value(mCamera, DC1394_FEATURE_SHARPNESS, &vValue);
 
     }
     return vValue;
