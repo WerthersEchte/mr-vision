@@ -21,6 +21,7 @@
 #include <iostream>
 #include <limits>
 
+
 namespace mrvision {
 
 CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
@@ -60,8 +61,8 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->lEMarkerSize->setValidator( vValidator );
 
 
-    mUi->hSThreshold->setValue( mrvision::THRESHOLD );
-    mUi->lEThreshold->setText( QString::number( mrvision::THRESHOLD ) );
+    mUi->hSThreshold->setValue( mDetector->getThreshold() );
+    mUi->lEThreshold->setText( QString::number( mDetector->getThreshold() ) );
     connect( mUi->hSThreshold, SIGNAL( valueChanged( int ) ), this, SLOT( setlEThreshold( int ) ) );
     connect( mUi->lEThreshold, SIGNAL( editingFinished( ) ), this, SLOT( setThreshold( ) ) );
 
@@ -300,13 +301,14 @@ void CameraGui::loadCameraGuiConfig( bool aDummy )
 void CameraGui::setlEThreshold( int aValue ){
 
     mUi->lEThreshold->setText( QString::number( aValue ) );
+    mDetector->setThreshold( mUi->lEThreshold->text().toInt() );
 
 }
 
 void CameraGui::setThreshold( ){
 
-    mrvision::THRESHOLD = mUi->lEThreshold->text().toInt();
-    mUi->hSThreshold->setValue( mrvision::THRESHOLD );
+    mDetector->setThreshold( mUi->lEThreshold->text().toInt() );
+    mUi->hSThreshold->setValue( mDetector->getThreshold() );
 
 }
 
@@ -473,6 +475,7 @@ void CameraGui::detectBots( bool aActivateDetection ){
 
         qRegisterMetaType< cv::Mat >("cv::Mat");
         connect( mCamera, SIGNAL( newVideoFrame( cv::Mat ) ), mDetector, SLOT( detectMarkers( cv::Mat ) ) );
+        mDetector->setStatus( true );
 
         if( !mCamera->isRunning() ){
 
@@ -482,6 +485,7 @@ void CameraGui::detectBots( bool aActivateDetection ){
     } else {
 
         disconnect( mCamera, &Camera::newVideoFrame, mDetector, &Detector::detectMarkers );
+        mDetector->setStatus( false );
 
     }
 
@@ -520,9 +524,8 @@ void CameraGui::startStreamingMarker( bool aStreaming ){
     if( aStreaming ){
 
         qRegisterMetaType< cv::Mat >("cv::Mat");
-        //qRegisterMetaType< std::vector<bool> >("std::vector<bool>");
 
-        connect( mDetector, SIGNAL( showMarkerAndImage( cv::Mat, std::vector<bool> ) ), this, SLOT( streamFoundMarkers( cv::Mat, std::vector<bool> ) ) );
+        connect( mDetector, SIGNAL( showMarkerAndImage( cv::Mat, QList<bool> ) ), this, SLOT( streamFoundMarkers( cv::Mat, QList<bool> ) ) );
 
         mUi->lblMarkerImage->show();
         mUi->lblMarkerDetect->show();
@@ -539,17 +542,17 @@ void CameraGui::startStreamingMarker( bool aStreaming ){
 }
 
 
-void CameraGui::streamFoundMarkers( const cv::Mat& aImage, const std::vector<bool>& aMarker ){
+void CameraGui::streamFoundMarkers( const cv::Mat& aImage, const QList<bool>& aMarker ){
 
     QtConcurrent::run(this, &CameraGui::createMarkerPictures, aImage, aMarker);
 
 }
 
-void CameraGui::createMarkerPictures( const cv::Mat& aImage, const std::vector<bool>& aMarker ){
+void CameraGui::createMarkerPictures( const cv::Mat& aImage, const QList<bool>& aMarker ){
 
     if( mUi->gBMarkerDetectedPictures->isChecked() ){
 
-        QPixmap vPixmap;
+        QPixmap vPixmap, vMarker(66, 66);
 
         QVector<QRgb> vColorTable;
         for (int i=0; i<256; i++){
@@ -561,7 +564,22 @@ void CameraGui::createMarkerPictures( const cv::Mat& aImage, const std::vector<b
 
         vPixmap = QPixmap::fromImage( img );
 
-        emit newMarkerPixs(vPixmap, vPixmap);
+        QPainter painter(&vMarker);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        for( int vHeight = 0; vHeight < 3; ++vHeight ){
+
+            for( int vWidth = 0; vWidth < 3; ++vWidth ){
+
+                painter.fillRect( QRect( 66 / 3 * vWidth, 66 / 3 * vHeight,
+                                         66 / 3, 66 / 3 ),
+                                  aMarker.at( 3 * vHeight + vWidth ) ? Qt::white : Qt::black);
+
+            }
+
+        }
+
+        emit newMarkerPixs(vPixmap, vMarker);
 
     }
 

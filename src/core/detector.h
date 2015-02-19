@@ -24,12 +24,16 @@ public:
     virtual void setCameraFile( QString aCameraFile ) = 0;
     virtual aruco::CameraParameters* getCameraFile() = 0;
 
+    virtual void setThreshold( int aThreshold = 128 ) = 0;
+    virtual int getThreshold() = 0;
+    virtual void setStatus( bool aStatus ) = 0;
+
 public slots:
     virtual void detectMarkers( const cv::Mat& aImage ) = 0;
 
 signals:
     void markersDetected( const std::vector<aruco::Marker>& aListOfMarkers );
-    void showMarkerAndImage( const cv::Mat& aImage, const std::vector<bool>& aMarker );
+    void showMarkerAndImage( const cv::Mat& aImage, const QList<bool>& aMarker );
 
 };
 

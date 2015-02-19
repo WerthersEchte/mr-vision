@@ -76,7 +76,7 @@ private slots:
 
 public slots:
     void streamVideo( const cv::Mat& aVideoFrame );
-    void streamFoundMarkers( const cv::Mat& aImage, const std::vector<bool>& aMarker );
+    void streamFoundMarkers( const cv::Mat& aImage, const QList<bool>& aMarker );
 
 signals:
     void newPicture( const QPixmap & );
@@ -84,7 +84,7 @@ signals:
 
 private:
     void createPictureFromVideoframe( const cv::Mat& aVideoFrame );
-    void createMarkerPictures( const cv::Mat& aImage, const std::vector<bool>& aMarker );
+    void createMarkerPictures( const cv::Mat& aImage, const QList<bool>& aMarker );
 
 };
 
