@@ -1,5 +1,7 @@
 #include "src/core/detectorsimple.h"
 
+#include "src/core/detectedmarker.h"
+
 #include "iostream"
 
 #include <QtConcurrent/QtConcurrent>
@@ -8,15 +10,13 @@
 namespace mrvision {
 
 DetectorSimple::DetectorSimple( float aSizeOfMarker ) :
-    mDetector(),
-    mSizeOfMarker(aSizeOfMarker),
+    mThreshold(0.3),
+    mMinSize(3),
+    mMaxSize(10),
     isRunning(false),
     mStatus(false),
     mCameraParameters()
 {
-
-    mDetector.setMinMaxSize(0.001);
-    mDetector.setMakerDetectorFunction(&identifyMarker);
 
     qRegisterMetaType< cv::Mat >("cv::Mat");
 
@@ -26,29 +26,6 @@ DetectorSimple::DetectorSimple( float aSizeOfMarker ) :
 
 DetectorSimple::~DetectorSimple(){}
 
-void DetectorSimple::setMarkerSize( float aMarkerSize ){
-
-    mSizeOfMarker = aMarkerSize;
-
-}
-
-float DetectorSimple::getMarkerSize(){
-
-    return mSizeOfMarker;
-
-}
-
-void DetectorSimple::setCameraFile( QString aCameraFile ){
-
-    try{
-        mCameraParameters.readFromXMLFile( aCameraFile.toLocal8Bit().constData() );
-    } catch( const cv::Exception& vException ){
-
-        std::cout << vException.what() << std::endl;
-
-    }
-}
-
 aruco::CameraParameters* DetectorSimple::getCameraFile(){
 
     return &mCameraParameters;
@@ -57,16 +34,28 @@ aruco::CameraParameters* DetectorSimple::getCameraFile(){
 
 void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
 
-    std::vector<aruco::Marker> vFoundMarkers;
+    std::vector<DetectedMarker> vFoundMarkers;
 
-    if( mCameraParameters.isValid() ){
-        mCameraParameters.resize( aImage.size() );
-        mDetector.detect( aImage , vFoundMarkers, mCameraParameters, mSizeOfMarker );
+    // TODO: please do the needful for this image
+
+    cv::Mat vBinaryImage( aImage.size(), aImage.type() );
+    cv::threshold( aImage, vBinaryImage, mThreshold, 1, cv::THRESH_BINARY );
+
+    vector<vector<Point> > contours;
+    vector<Vec4i> hierarchy;
+
+    cv::findContours( vBinaryImage, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+    for( vector<Point> vRegion : contours ){
+
+        for( )
+
 
     }
 
+
     if( vFoundMarkers.size() ){
-        emit markersDetected( vFoundMarkers );
+        //emit markersDetected( vFoundMarkers );
     }
     isRunning = false;
 
@@ -106,15 +95,11 @@ int DetectorSimple::identifyMarker( const cv::Mat &in, int &nRotations ){
     return -1;
 }
 
-void DetectorSimple::setThreshold( int aThreshold ){
-
-    mDetector.THRESHOLD = aThreshold;
+void DetectorSimple::setParameter( int aParameter, void* aValue ){
 
 }
 
-int DetectorSimple::getThreshold(){
-
-    return mDetector.THRESHOLD;
+void DetectorSimple::getParameter( int aParameter, void* aValue ){
 
 }
 

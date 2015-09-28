@@ -34,6 +34,7 @@ set( SOURCE
    src/core/markerlist.cpp
    src/core/udp_server.cpp
    src/core/detectorsimple.cpp
+   src/core/detectedmarker.cpp
    src/core/ill/MarkerDetector.cpp
 )
 set( HEADERS
@@ -50,6 +51,7 @@ set( HEADERS
    src/core/udp_server.h
    src/core/detector.h
    src/core/detectorsimple.h
+   src/core/detectedmarker.h
    src/core/ill/MarkerDetector.h
 )
 

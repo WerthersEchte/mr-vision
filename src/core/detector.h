@@ -18,14 +18,8 @@ class Detector : public QObject{
 public:
     virtual ~Detector(){};
 
-    virtual void setMarkerSize( float aMarkerSize ) = 0;
-    virtual float getMarkerSize() = 0;
-
-    virtual void setCameraFile( QString aCameraFile ) = 0;
-    virtual aruco::CameraParameters* getCameraFile() = 0;
-
-    virtual void setThreshold( int aThreshold = 128 ) = 0;
-    virtual int getThreshold() = 0;
+    virtual void setParameter( int aParameter, void* aValue ) = 0;
+    virtual void getParameter( int aParameter, void* aValue ) = 0;
     virtual void setStatus( bool aStatus ) = 0;
 
 public slots:
