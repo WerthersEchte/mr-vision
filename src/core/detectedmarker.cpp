@@ -1,15 +1,19 @@
-#include "src/core/detectorsimple.h"
+#include "src/core/detectedmarker.h"
 
-DetectedMarker::DetectedMarker( int aMarkerID, int aXPosition, int aYPosition, vector<Vector2D>* aCorners = new vector<Vector2D>() ) :
-    mMarkerID(aMarkerID),
-    mXPosition(aXPosition),
-    mYPosition(aYPosition)
+namespace mrvision {
+
+DetectedMarker::DetectedMarker( cv::Mat aMarkerImage, float aMarkerDirection, cv::Point aMarkerPosition ) :
+    mMarkerImage(aMarkerImage),
+    mMarkerDirection(aMarkerDirection),
+    mMarkerPosition(aMarkerPosition),
+    mMarker(),
+    mMarkerId(-1)
 {
-    mCorners = aCorners;
-};
 
-DetectedMarker~DetectedMarker(){
+}
 
-    delete mCorners;
+DetectedMarker::~DetectedMarker(){
 
 };
+
+}

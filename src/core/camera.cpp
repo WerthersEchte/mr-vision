@@ -241,28 +241,24 @@ uint64_t Camera::getId(){
 
 }
 
-void Camera::decodeBotPositions( const std::vector<aruco::Marker>& aListOfMarkers ){
+void Camera::decodeBotPositions( const std::vector<DetectedMarker>& aListOfMarkers ){
 
     QtConcurrent::run(this, &Camera::calculateBotPositions, aListOfMarkers);
 
 }
 
-#define PI 3.14159265
-
-void Camera::calculateBotPositions( const std::vector<aruco::Marker>& aListOfMarkers ){
+void Camera::calculateBotPositions( const std::vector<DetectedMarker>& aListOfMarkers ){
 
     QList<mrvision::Bot> vBots;
-    int k = 11,it, offset=16, sosize=706;
 
-    for( aruco::Marker vMarker : aListOfMarkers )
+    for( DetectedMarker vMarker : aListOfMarkers )
     {
-        cv::Point2f vPoint = vMarker[1] - vMarker[2];
         vBots.append( mrvision::Bot(
-                vMarker.id,
-                ((mULMultiplier*(mUpperX - mLowerX)) + vMarker.getCenter().y - mLowerX) / (2*(mUpperX - mLowerX)),
-                ((mLRMultiplier*(mUpperY - mLowerY)) + vMarker.getCenter().x - mLowerY) / (mUpperY - mLowerY),
-                atan2( vPoint.x, vPoint.y) * 180 / PI) );
-        emit detectedBot(vMarker.id);
+                vMarker.mMarkerId,
+                ((float)(mULMultiplier*(mUpperX - mLowerX)) + vMarker.mMarkerPosition.y - mLowerX) / (mUpperX - mLowerX !=0 ? (2*(mUpperX - mLowerX)) : 1) ,
+                ((float)(mLRMultiplier*(mUpperY - mLowerY)) + vMarker.mMarkerPosition.x - mLowerY) / (mUpperY - mLowerY !=0 ? ((mUpperY - mLowerY)) : 1),
+                vMarker.mMarkerDirection*-1+90) );
+        emit detectedBot(vMarker.mMarkerId);
     }
 
     emit decodedBotPositions( vBots );

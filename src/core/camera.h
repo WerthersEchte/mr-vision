@@ -2,6 +2,7 @@
 #define _camera_h
 
 #include "src/core/bot.h"
+#include "src/core/detectedmarker.h"
 
 #include <dc1394/dc1394.h>
 #include <dc1394/control.h>
@@ -51,7 +52,7 @@ public:
     static QList<Camera*> findCameras();
 
 public slots:
-    void decodeBotPositions( const std::vector<aruco::Marker>& aListOfMarkers );
+    void decodeBotPositions( const std::vector<DetectedMarker>& aListOfMarkers );
 
     void setShutterMode( bool aManual = true );
     void setShutter( int aShutterTime = 400 );
@@ -69,7 +70,7 @@ signals:
 
 private:
     void run();
-    void calculateBotPositions( const std::vector<aruco::Marker>& aListOfMarkers );
+    void calculateBotPositions( const std::vector<DetectedMarker>& aListOfMarkers );
 
     void getFeatureMinMax( dc1394feature_t aFeature, unsigned int* aMin, unsigned int* aMax );
 

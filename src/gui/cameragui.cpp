@@ -39,7 +39,9 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->lEScreenshotName->setText( QString::number(mCamera->getId()) + "_" );
     connect( mUi->pBActivateControls, SIGNAL( clicked( bool ) ), this, SLOT( showInterface( bool ) ) );
 
-    mUi->lEMarkerSize->setText( QString::number( mDetector->getMarkerSize() ) );
+    float vMakerSize;
+    mDetector->getParameter( MARKERSIZE, &vMakerSize );
+    mUi->lEMarkerSize->setText( QString::number( vMakerSize ) );
 
     mUi->wCont2->hide();
     mUi->wCont3->hide();
@@ -61,8 +63,10 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->lEMarkerSize->setValidator( vValidator );
 
 
-    mUi->hSThreshold->setValue( mDetector->getThreshold() );
-    mUi->lEThreshold->setText( QString::number( mDetector->getThreshold() ) );
+    int vThreshold;
+    mDetector->getParameter( THRESHOLD, &vThreshold );
+    mUi->hSThreshold->setValue( vThreshold );
+    mUi->lEThreshold->setText( QString::number( vThreshold ) );
     connect( mUi->hSThreshold, SIGNAL( valueChanged( int ) ), this, SLOT( setlEThreshold( int ) ) );
     connect( mUi->lEThreshold, SIGNAL( editingFinished( ) ), this, SLOT( setThreshold( ) ) );
 
@@ -123,8 +127,8 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     connect( mUi->gBCameraStream, SIGNAL( clicked( bool ) ), this, SLOT( startStreamingVideo( bool ) ) );
     connect( this, SIGNAL( newPicture( QPixmap ) ), this, SLOT( paintPicture( QPixmap ) ) );
 
-    qRegisterMetaType< std::vector<aruco::Marker> >("std::vector<aruco::Marker>");
-    connect( mDetector, SIGNAL( markersDetected( std::vector<aruco::Marker> ) ), mCamera, SLOT( decodeBotPositions( std::vector<aruco::Marker> ) ) );
+    qRegisterMetaType< std::vector<DetectedMarker> >("std::vector<DetectedMarker>");
+    connect( mDetector, SIGNAL( markersDetected( std::vector<DetectedMarker> ) ), mCamera, SLOT( decodeBotPositions( std::vector<DetectedMarker> ) ) );
     qRegisterMetaType< QList<mrvision::Bot> >("QList<mrvision::Bot>");
     connect( mCamera, SIGNAL( decodedBotPositions( QList<mrvision::Bot> ) ), UDPServer::getInstance(), SLOT( send_Data( QList<mrvision::Bot> ) ) );
 
@@ -301,14 +305,16 @@ void CameraGui::loadCameraGuiConfig( bool aDummy )
 void CameraGui::setlEThreshold( int aValue ){
 
     mUi->lEThreshold->setText( QString::number( aValue ) );
-    mDetector->setThreshold( mUi->lEThreshold->text().toInt() );
+    int vThreshold = mUi->lEThreshold->text().toInt();
+    mDetector->setParameter( THRESHOLD, &vThreshold );
 
 }
 
 void CameraGui::setThreshold( ){
 
-    mDetector->setThreshold( mUi->lEThreshold->text().toInt() );
-    mUi->hSThreshold->setValue( mDetector->getThreshold() );
+    int vThreshold = mUi->lEThreshold->text().toInt();
+    mDetector->setParameter( THRESHOLD, &vThreshold );
+    mUi->hSThreshold->setValue( vThreshold );
 
 }
 
@@ -445,14 +451,16 @@ void CameraGui::showMarker( bool aShow ){
 void CameraGui::setCameraFile( ){
 
     if( QFile::exists( mUi->lECameraFile->text() ) ){
-        mDetector->setCameraFile( mUi->lECameraFile->text() );
+        QString vCamerafile = mUi->lECameraFile->text();
+        mDetector->setParameter( CAMERAFILE, &vCamerafile );
     }
 
 }
 
 void CameraGui::setMarkerSize( ){
 
-    mDetector->setMarkerSize( mUi->lEMarkerSize->text().toFloat() );
+    float vMarkerSize = mUi->lEMarkerSize->text().toFloat();
+    mDetector->setParameter( MARKERSIZE, &vMarkerSize );
 
 }
 
@@ -612,8 +620,8 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
         }
 
         cv::Mat undistorted;
-        if( mUi->cBUndistort->isChecked() && mDetector->getCameraFile()->isValid() ){
-            cv::undistort(aVideoFrame, undistorted, mDetector->getCameraFile()->CameraMatrix, mDetector->getCameraFile()->Distorsion );
+        if( false ) {//mUi->cBUndistort->isChecked() && mDetector->getCameraFile()->isValid() ){
+            //cv::undistort(aVideoFrame, undistorted, mDetector->getCameraFile()->CameraMatrix, mDetector->getCameraFile()->Distorsion );
         } else {
             undistorted = aVideoFrame;
         }

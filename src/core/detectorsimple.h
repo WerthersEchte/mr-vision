@@ -2,12 +2,14 @@
 #define _detectorsimple_h
 
 #include "src/core/detector.h"
+#include "src/core/detectedmarker.h"
 #include "src/core/markerlist.h"
 #include "src/core/bot.h"
 
-#include "ill/MarkerDetector.h"
-
 #include <string>
+#include <vector>
+
+#include "opencv2/opencv.hpp"
 
 namespace mrvision {
 
@@ -17,17 +19,27 @@ class DetectorSimple : public Detector{
 
     Q_OBJECT
 
-    aruco::CameraParameters mCameraParameters;
-    double mThreshold;
+    int mThreshold;
     int mMinSize, mMaxSize;
     bool isRunning, mStatus;
+
+    cv::Mat mBinaryImage;
+    std::vector<cv::Point> mPoints, mArea, mRealPoints;
+    int mCounterI, mCounterJ, mCounterK, mCounterL;
+
+    int mMaxRangeBetweenPoints, mMinRangeBetweenPoints;
+    std::vector<std::vector<int> > mDistanceBetweenPoints, mFoundCombinations;
+
+    int mPointA, mPointB, mPointC, mPointD;
+    int mDistanceAB, mDistanceBC, mDistanceCD, mDistanceAD, mDistanceAC, mDistanceBD;
+    bool mDistanceABtest, mDistanceBCtest, mDistanceCDtest, mDistanceADtest, mDistanceACtest, mDistanceBDtest;
 
 public:
     DetectorSimple( float aSizeOfMarker = 0.025 );
     virtual ~DetectorSimple();
 
-    virtual void setParameter( int aParameter, void* aValue );
-    virtual void getParameter( int aParameter, void* aValue );
+    virtual void setParameter( parameter aParameter, void* aValue );
+    virtual void getParameter( parameter aParameter, void* aValue );
     virtual void setStatus( bool aStatus );
 
 public slots:
@@ -36,8 +48,11 @@ public slots:
     void blahMarkerAndImage( const cv::Mat& aImage, const QList<bool>& aMarker );
 
 private:
+    bool checkForDuplicates( int vA, int vB, int vC, int vD );
+    bool checkAngles( const cv::Point& aA, const cv::Point& aB, const cv::Point& aC, const cv::Point& aD );
+
     void detectingMarkerInImage( const cv::Mat& aImage );
-    static int identifyMarker( const cv::Mat &in,int &nRotations );
+    bool identifyMarker( DetectedMarker& aNotYetFoundMarker );
 
 };
 
