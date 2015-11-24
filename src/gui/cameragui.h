@@ -8,6 +8,7 @@
 
 #include "src/core/camera.h"
 #include "src/core/detector.h"
+#include "src/core/detectorsimple.h"
 
 namespace Ui {
 	class Camera;
@@ -23,7 +24,7 @@ class CameraGui : public QWidget
 
 	Ui::Camera *mUi;
 	Camera* mCamera;
-	Detector* mDetector;
+	DetectorSimple* mDetector;
 
 	QList<MarkerGui*> mKnownMarkers;
 
@@ -55,11 +56,6 @@ private slots:
     void setlEThreshold( int aValue );
     void setThreshold( );
 
-    void pushUp( bool aDummy );
-    void pushDown( bool aDummy );
-    void pushLeft( bool aDummy );
-    void pushRight( bool aDummy );
-
     void setBorderData();
 
     void setlEShutter( int aValue );
@@ -77,6 +73,7 @@ private slots:
 public slots:
     void streamVideo( const cv::Mat& aVideoFrame );
     void streamFoundMarkers( const cv::Mat& aImage, const QList<bool>& aMarker );
+    void connectLiveMarker( bool aChecked );
 
 signals:
     void newPicture( const QPixmap & );

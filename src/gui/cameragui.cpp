@@ -39,8 +39,8 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->lEScreenshotName->setText( QString::number(mCamera->getId()) + "_" );
     connect( mUi->pBActivateControls, SIGNAL( clicked( bool ) ), this, SLOT( showInterface( bool ) ) );
 
-    float vMakerSize;
-    mDetector->getParameter( MARKERSIZE, &vMakerSize );
+    float vMakerSize = 1.0;
+    //mDetector->getParameter( MARKERSIZE, &vMakerSize );
     mUi->lEMarkerSize->setText( QString::number( vMakerSize ) );
 
     mUi->wCont2->hide();
@@ -53,9 +53,12 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->lERightBorder->setValidator( vValidator );
     mUi->lEUpperBorder->setValidator( vValidator );
     mUi->lELowerBorder->setValidator( vValidator );
+    mUi->lEDALeftBorder->setValidator( vValidator );
+    mUi->lEDARightBorder->setValidator( vValidator );
+    mUi->lEDAUpperBorder->setValidator( vValidator );
+    mUi->lEDALowerBorder->setValidator( vValidator );
     mUi->lEULOffset->setValidator( vValidator );
     mUi->lELROffset->setValidator( vValidator );
-    mUi->lEPointsperClick->setValidator( vValidator );
 
     mUi->lEScreenshotNumber->setValidator( vValidator );
 
@@ -63,10 +66,8 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->lEMarkerSize->setValidator( vValidator );
 
 
-    int vThreshold;
-    mDetector->getParameter( THRESHOLD, &vThreshold );
-    mUi->hSThreshold->setValue( vThreshold );
-    mUi->lEThreshold->setText( QString::number( vThreshold ) );
+    mUi->hSThreshold->setValue( mDetector->getThreshold() );
+    mUi->lEThreshold->setText( QString::number( mDetector->getThreshold() ) );
     connect( mUi->hSThreshold, SIGNAL( valueChanged( int ) ), this, SLOT( setlEThreshold( int ) ) );
     connect( mUi->lEThreshold, SIGNAL( editingFinished( ) ), this, SLOT( setThreshold( ) ) );
 
@@ -137,11 +138,6 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     connect( mUi->lECameraFile, SIGNAL( editingFinished( ) ), this, SLOT( setCameraFile( ) ) );
     connect( mUi->pBLoadCameraConfigFile, SIGNAL( clicked( bool ) ), this, SLOT( selectCameraFile( bool ) ) );
 
-    connect( mUi->pBMoveUp, SIGNAL( clicked( bool ) ), this, SLOT( pushUp( bool ) ) );
-    connect( mUi->pBMoveDown, SIGNAL( clicked( bool ) ), this, SLOT( pushDown( bool ) ) );
-    connect( mUi->pBMoveLeft, SIGNAL( clicked( bool ) ), this, SLOT( pushLeft( bool ) ) );
-    connect( mUi->pBMoveRight, SIGNAL( clicked( bool ) ), this, SLOT( pushRight( bool ) ) );
-
     connect( mUi->lELeftBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
     connect( mUi->lERightBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
     connect( mUi->lEUpperBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
@@ -179,6 +175,12 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     vLayout->addWidget( mUi->gBSharpness );
     mUi->gBFeatures->setLayout( vLayout );
 
+    //TODO: dynamic
+    mUi->lEDARightBorder->setText( QString::number(800) );
+    mUi->lEDALowerBorder->setText( QString::number(600) );
+
+    connect( mUi->cBShowMarker, SIGNAL( clicked( bool ) ), mCamera, SLOT( connectLiveMarker( bool ) ) );
+
 }
 
 CameraGui::~CameraGui() {
@@ -192,6 +194,20 @@ CameraGui::~CameraGui() {
     delete mUi;
     delete mCamera;
     delete mDetector;
+
+}
+
+void CameraGui::connectLiveMarker( bool aChecked ){
+
+    if(aChecked){
+
+        connect( mDetector, SIGNAL( markersDetected( std::vector<DetectedMarker> ) ), this, SLOT( saveCurrentMarkers( std::vector<DetectedMarker> ) ) );
+gdsgdsgdssdg
+    } else {
+
+        disconnect( mDetector, SIGNAL( markersDetected( std::vector<DetectedMarker> ) ), this, SLOT( saveCurrentMarkers( std::vector<DetectedMarker> ) ) );
+
+    }
 
 }
 
@@ -305,16 +321,14 @@ void CameraGui::loadCameraGuiConfig( bool aDummy )
 void CameraGui::setlEThreshold( int aValue ){
 
     mUi->lEThreshold->setText( QString::number( aValue ) );
-    int vThreshold = mUi->lEThreshold->text().toInt();
-    mDetector->setParameter( THRESHOLD, &vThreshold );
+    mDetector->setThreshold( mUi->lEThreshold->text().toInt() );
 
 }
 
 void CameraGui::setThreshold( ){
 
-    int vThreshold = mUi->lEThreshold->text().toInt();
-    mDetector->setParameter( THRESHOLD, &vThreshold );
-    mUi->hSThreshold->setValue( vThreshold );
+    mDetector->setThreshold( mUi->lEThreshold->text().toInt() );
+    mUi->hSThreshold->setValue( mUi->lEThreshold->text().toInt() );
 
 }
 
@@ -451,8 +465,7 @@ void CameraGui::showMarker( bool aShow ){
 void CameraGui::setCameraFile( ){
 
     if( QFile::exists( mUi->lECameraFile->text() ) ){
-        QString vCamerafile = mUi->lECameraFile->text();
-        mDetector->setParameter( CAMERAFILE, &vCamerafile );
+        mDetector->setCameraFile( mUi->lECameraFile->text() );
     }
 
 }
@@ -460,7 +473,7 @@ void CameraGui::setCameraFile( ){
 void CameraGui::setMarkerSize( ){
 
     float vMarkerSize = mUi->lEMarkerSize->text().toFloat();
-    mDetector->setParameter( MARKERSIZE, &vMarkerSize );
+    //mDetector->setParameter( MARKERSIZE, &vMarkerSize );
 
 }
 
@@ -612,16 +625,18 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
 
         QPixmap vPixmap;
 
-        QPen LinePenRed(Qt::red,1), LinePenGreen(Qt::green,1), LinePenBlue(Qt::blue,1), LinePenYellow(Qt::yellow,1);
+        QPen LinePenRed(Qt::red,1), LinePenGreen(Qt::green,1), LinePenBlue(Qt::blue,1), LinePenYellow(Qt::yellow,1), LinePenWhite(Qt::white,1);
 
         QVector<QRgb> vColorTable;
         for (int i=0; i<256; i++){
             vColorTable.push_back(qRgb(i,i,i));
         }
 
-        cv::Mat undistorted;
-        if( false ) {//mUi->cBUndistort->isChecked() && mDetector->getCameraFile()->isValid() ){
-            //cv::undistort(aVideoFrame, undistorted, mDetector->getCameraFile()->CameraMatrix, mDetector->getCameraFile()->Distorsion );
+        cv::Mat undistorted, sharpie;
+        if( mUi->cBUndistort->isChecked() ){//&& mDetector->getCameraFile()->isValid() ){
+            cv::undistort(aVideoFrame, undistorted, mDetector->mCameraMatrix, mDetector->mDistortionMatrix );
+        cv::GaussianBlur(undistorted, sharpie, cv::Size(0, 0), 3);
+        cv::addWeighted(sharpie, -0.5, undistorted, 1.5, 0, undistorted);
         } else {
             undistorted = aVideoFrame;
         }
@@ -668,33 +683,16 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
         if( mUi->cBBorders->isChecked() ){
 
             QPainter painter( &vPixmap );
-            if( mUi->cBUpperBorder->isChecked() ){
-                painter.setPen( LinePenYellow );
-            } else {
-                painter.setPen( LinePenBlue );
-            }
+            painter.setPen( LinePenYellow );
             painter.drawLine(0, mUi->lEUpperBorder->text().toInt() ,vPixmap.width(), mUi->lEUpperBorder->text().toInt() );
-
-            if( mUi->cBLowerBorder->isChecked() ){
-                painter.setPen( LinePenYellow );
-            } else {
-                painter.setPen( LinePenBlue );
-            }
             painter.drawLine(0, mUi->lELowerBorder->text().toInt() ,vPixmap.width(), mUi->lELowerBorder->text().toInt() );
-
-            if( mUi->cBLeftBorder->isChecked() ){
-                painter.setPen( LinePenYellow );
-            } else {
-                painter.setPen( LinePenBlue );
-            }
             painter.drawLine(mUi->lELeftBorder->text().toInt() , 0,mUi->lELeftBorder->text().toInt() , vPixmap.height() );
-
-            if( mUi->cBRightBorder->isChecked() ){
-                painter.setPen( LinePenYellow );
-            } else {
-                painter.setPen( LinePenBlue );
-            }
             painter.drawLine(mUi->lERightBorder->text().toInt() , 0,mUi->lERightBorder->text().toInt() , vPixmap.height() );
+            painter.setPen( LinePenWhite );
+            painter.fillRect(0, 0,vPixmap.width(), mUi->lEDAUpperBorder->text().toInt(), Qt::SolidPattern );
+            painter.fillRect(0, 0, mUi->lEDALeftBorder->text().toInt(), vPixmap.height(), Qt::SolidPattern );
+            painter.fillRect(mUi->lEDARightBorder->text().toInt() , 0, vPixmap.width(), vPixmap.height(), Qt::SolidPattern );
+            painter.fillRect(0, mUi->lEDALowerBorder->text().toInt() , vPixmap.width(), vPixmap.height(), Qt::SolidPattern );
 
             painter.end();
 
@@ -718,70 +716,6 @@ void CameraGui::takeScreenshot( bool aScreenshot ){
 
 }
 
-void CameraGui::pushUp( bool aDummy ){
-
-    if( mUi->cBUpperBorder->isChecked() ){
-        mUi->lEUpperBorder->setText( QString::number( mUi->lEUpperBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBLowerBorder->isChecked() ){
-        mUi->lELowerBorder->setText( QString::number( mUi->lELowerBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBULOffset->isChecked() ){
-        mUi->lEULOffset->setText( QString::number( mUi->lEULOffset->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBLROffset->isChecked() ){
-        mUi->lELROffset->setText( QString::number( mUi->lELROffset->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-
-    setBorderData();
-
-}
-
-void CameraGui::pushDown( bool aDummy ){
-
-    if( mUi->cBUpperBorder->isChecked() ){
-        mUi->lEUpperBorder->setText( QString::number( mUi->lEUpperBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBLowerBorder->isChecked() ){
-        mUi->lELowerBorder->setText( QString::number( mUi->lELowerBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBULOffset->isChecked() ){
-        mUi->lEULOffset->setText( QString::number( mUi->lEULOffset->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBLROffset->isChecked() ){
-        mUi->lELROffset->setText( QString::number( mUi->lELROffset->text().toInt() -  mUi->lEPointsperClick->text().toInt() ) );
-    }
-
-    setBorderData();
-
-}
-
-void CameraGui::pushLeft( bool aDummy ){
-
-    if( mUi->cBLeftBorder->isChecked() ){
-        mUi->lELeftBorder->setText( QString::number( mUi->lELeftBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBRightBorder->isChecked() ){
-        mUi->lERightBorder->setText( QString::number( mUi->lERightBorder->text().toInt() - mUi->lEPointsperClick->text().toInt() ) );
-    }
-
-    setBorderData();
-
-}
-
-void CameraGui::pushRight( bool aDummy ){
-
-    if( mUi->cBLeftBorder->isChecked() ){
-        mUi->lELeftBorder->setText( QString::number( mUi->lELeftBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-    if( mUi->cBRightBorder->isChecked() ){
-        mUi->lERightBorder->setText( QString::number( mUi->lERightBorder->text().toInt() + mUi->lEPointsperClick->text().toInt() ) );
-    }
-
-    setBorderData();
-
-}
-
 void CameraGui::setBorderData(){
 
     mCamera->mLowerY = mUi->lELeftBorder->text().toInt();
@@ -790,6 +724,8 @@ void CameraGui::setBorderData(){
     mCamera->mUpperX = mUi->lELowerBorder->text().toInt();
     mCamera->mULMultiplier = mUi->lEULOffset->text().toInt();
     mCamera->mLRMultiplier = mUi->lELROffset->text().toInt();
+
+    mDetector->setDetectionArea( mUi->lEDALeftBorder->text().toInt(), mUi->lEDARightBorder->text().toInt(), mUi->lEDAUpperBorder->text().toInt(), mUi->lEDALowerBorder->text().toInt() );
 
 }
 

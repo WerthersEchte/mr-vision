@@ -13,7 +13,7 @@ MarkerList::MarkerList() :
         zwei = ((i % 2) + ((i >> 2) % 2) + ((i >> 3) % 2)) % 2;
         vier = (((i >> 1) % 2) + ((i >> 2) % 2) + ((i >> 3) % 2)) % 2;
         acht = (((i >> 4) % 2)) % 2;
-        mMarker.push_back( Marker( std::vector<bool>{ ((i >> 4) % 2) != 1, acht != 1, ((i >> 3) % 2) != 1, ((i >> 2) % 2) != 1, ((i >> 1) % 2) != 1, vier != 1, (i % 2) != 1, zwei != 1, eins != 1 }, i ) );
+        mMarker.push_back( Marker( std::vector<bool>{ eins != 1, zwei != 1, (i % 2) != 1, vier != 1, ((i >> 1) % 2) != 1, ((i >> 2) % 2) != 1, ((i >> 3) % 2) != 1, acht != 1, ((i >> 4) % 2) != 1 }, i ) );
     }
 
 /*

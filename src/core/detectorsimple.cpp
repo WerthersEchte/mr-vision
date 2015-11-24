@@ -2,28 +2,31 @@
 
 #include "src/core/detectedmarker.h"
 
-#include "iostream"
+#include <iostream>
+#include <fstream>
 
 #include <QtConcurrent/QtConcurrent>
 #include "opencv2/opencv.hpp"
 
 namespace mrvision {
 
-DetectorSimple::DetectorSimple( float aSizeOfMarker ) :
+DetectorSimple::DetectorSimple( float aSizeOfMarker, int aSizeOfImageX, int aSizeOfImageY ) :
     mThreshold(150),
     mMinSize(8),
     mMaxSize(15),
+    mDetectionAreaMaxX(aSizeOfImageX), mDetectionAreaMaxY(aSizeOfImageY), mDetectionAreaMinX(0), mDetectionAreaMinY(0),
     isRunning(false),
     mStatus(false),
     mBinaryImage(),
     mPoints(), mArea(), mRealPoints(),
     mCounterI(0), mCounterJ(0), mCounterK(0), mCounterL(0),
-    mMaxRangeBetweenPoints(225), mMinRangeBetweenPoints(64),
+    mMaxRangeBetweenPoints(400), mMinRangeBetweenPoints(64),
     mDistanceBetweenPoints(),
     mFoundCombinations(),
     mPointA(0), mPointB(0), mPointC(0), mPointD(0),
     mDistanceAB(0), mDistanceBC(0), mDistanceCD(0), mDistanceAD(0), mDistanceAC(0), mDistanceBD(0),
-    mDistanceABtest(false), mDistanceBCtest(false), mDistanceCDtest(false), mDistanceADtest(false), mDistanceACtest(false), mDistanceBDtest(false)
+    mDistanceABtest(false), mDistanceBCtest(false), mDistanceCDtest(false), mDistanceADtest(false), mDistanceACtest(false), mDistanceBDtest(false),
+    mCameraMatrix(), mDistortionMatrix(), mCameraSize()
 {
 
     qRegisterMetaType< cv::Mat >("cv::Mat");
@@ -43,7 +46,14 @@ void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
     mPoints.clear();
 
     try{
-        cv::findNonZero( mBinaryImage, mPoints );
+        cv::findNonZero(
+                        mBinaryImage(
+                                     cv::Rect(
+                                              cv::Point(std::max(0, mDetectionAreaMinX),std::max(0, mDetectionAreaMinY)),
+                                              cv::Point(std::min(mBinaryImage.size().width, mDetectionAreaMaxX),std::min(mBinaryImage.size().height, mDetectionAreaMaxY))
+                                              )
+                                     ),
+                                     mPoints );
     } catch( cv::Exception vNoPointsDetected ){
         std::cout << "No Points detected!\n" << std::endl;
     }
@@ -86,6 +96,11 @@ void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
         mRealPoints.back().x /= mArea.size();
         mRealPoints.back().y /= mArea.size();
 
+    }
+
+    for( int vI = 0; vI < mRealPoints.size(); ++vI ){
+        mRealPoints[vI].x += mDetectionAreaMinX;
+        mRealPoints[vI].y += mDetectionAreaMinY;
     }
 
     mFoundCombinations.clear();
@@ -337,14 +352,6 @@ bool DetectorSimple::identifyMarker( DetectedMarker& aNotYetFoundMarker ){
     return false;
 }
 
-void DetectorSimple::setParameter( parameter aParameter, void* aValue ){
-
-}
-
-void DetectorSimple::getParameter( parameter aParameter, void* aValue ){
-
-}
-
 void DetectorSimple::blahMarkerAndImage( const cv::Mat& aImage, const QList<bool>& aMarker ){
     emit showMarkerAndImage( aImage, aMarker );
 }
@@ -354,4 +361,53 @@ void DetectorSimple::setStatus( bool aStatus ){
     mStatus = aStatus;
 
 }
+void DetectorSimple::setThreshold( int aThreshold ){
+    mThreshold = aThreshold;
+}
+int DetectorSimple::getThreshold(){
+    return mThreshold;
+}
+
+
+void DetectorSimple::setCameraFile( QString aCameraFileName ){
+
+    cv::FileStorage fs(aCameraFileName.toStdString(), cv::FileStorage::READ);
+    int w=-1,h=-1;
+    cv::Mat MCamera,MDist;
+
+    fs["image_width"] >> w;
+    fs["image_height"] >> h;
+    fs["distortion_coefficients"] >> MDist;
+    fs["camera_matrix"] >> MCamera;
+
+    if (MCamera.cols==0 || MCamera.rows==0)throw cv::Exception(9007,"File :"+aCameraFileName.toStdString()+" does not contains valid camera matrix","CameraParameters::readFromXML",__FILE__,__LINE__);
+    if (w==-1 || h==0)throw cv::Exception(9007,"File :"+aCameraFileName.toStdString()+" does not contains valid camera dimensions","CameraParameters::readFromXML",__FILE__,__LINE__);
+
+    if (MCamera.type()!=CV_32FC1) MCamera.convertTo(mCameraMatrix,CV_32FC1);
+    else mCameraMatrix=MCamera;
+
+    if (MDist.total()<4) throw cv::Exception(9007,"File :"+aCameraFileName.toStdString()+" does not contains valid distortion_coefficients","CameraParameters::readFromXML",__FILE__,__LINE__);
+    //convert to 32 and get the 4 first elements only
+    cv::Mat mdist32;
+    MDist.convertTo(mdist32,CV_32FC1);
+//     Distorsion.create(1,4,CV_32FC1);
+//     for (int i=0;i<4;i++)
+//         Distorsion.ptr<float>(0)[i]=mdist32.ptr<float>(0)[i];
+
+    mDistortionMatrix.create(1,5,CV_32FC1);
+    for (int i=0;i<5;i++)
+        mDistortionMatrix.ptr<float>(0)[i]=mdist32.ptr<float>(0)[i];
+    mCameraSize.width=w;
+    mCameraSize.height=h;
+
+}
+
+    void DetectorSimple::setDetectionArea( int aMinX, int aMaxX, int aMinY, int aMaxY ){
+
+        mDetectionAreaMaxX = aMaxX;
+        mDetectionAreaMaxY = aMaxY;
+        mDetectionAreaMinX = aMinX;
+        mDetectionAreaMinY = aMinY;
+
+    }
 }

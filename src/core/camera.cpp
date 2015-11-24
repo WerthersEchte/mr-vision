@@ -28,11 +28,18 @@ Camera::Camera( dc1394camera_t *aCamera ) :
 
     dc1394_capture_setup(mCamera, 4, DC1394_CAPTURE_FLAGS_DEFAULT);
 
-    dc1394_feature_set_mode(mCamera, DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_AUTO);
     dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
     dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
     dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_AUTO);
     dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_AUTO);
+
+
+    dc1394_feature_set_mode(mCamera, DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_MANUAL);
+    dc1394_feature_whitebalance_set_value(mCamera, 0, 0);
+    dc1394_feature_set_power(mCamera, DC1394_FEATURE_TRIGGER, DC1394_OFF);
+    dc1394_feature_set_power(mCamera, DC1394_FEATURE_TEMPERATURE, DC1394_OFF);
+    dc1394_feature_set_power(mCamera, DC1394_FEATURE_HUE, DC1394_OFF);
+    dc1394_feature_set_power(mCamera, DC1394_FEATURE_SATURATION, DC1394_OFF);
 
     dc1394_video_set_transmission(mCamera, DC1394_ON);
 
@@ -257,7 +264,7 @@ void Camera::calculateBotPositions( const std::vector<DetectedMarker>& aListOfMa
                 vMarker.mMarkerId,
                 ((float)(mULMultiplier*(mUpperX - mLowerX)) + vMarker.mMarkerPosition.y - mLowerX) / (mUpperX - mLowerX !=0 ? (2*(mUpperX - mLowerX)) : 1) ,
                 ((float)(mLRMultiplier*(mUpperY - mLowerY)) + vMarker.mMarkerPosition.x - mLowerY) / (mUpperY - mLowerY !=0 ? ((mUpperY - mLowerY)) : 1),
-                vMarker.mMarkerDirection*-1+90) );
+                vMarker.mMarkerDirection*-1+90) ); //TODO: better
         emit detectedBot(vMarker.mMarkerId);
     }
 

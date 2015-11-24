@@ -21,6 +21,7 @@ class DetectorSimple : public Detector{
 
     int mThreshold;
     int mMinSize, mMaxSize;
+    int mDetectionAreaMaxX, mDetectionAreaMaxY, mDetectionAreaMinX, mDetectionAreaMinY;
     bool isRunning, mStatus;
 
     cv::Mat mBinaryImage;
@@ -33,14 +34,21 @@ class DetectorSimple : public Detector{
     int mPointA, mPointB, mPointC, mPointD;
     int mDistanceAB, mDistanceBC, mDistanceCD, mDistanceAD, mDistanceAC, mDistanceBD;
     bool mDistanceABtest, mDistanceBCtest, mDistanceCDtest, mDistanceADtest, mDistanceACtest, mDistanceBDtest;
+public:
+    // Read CameraFile - maybe move to Camera
+    cv::Mat mCameraMatrix;
+    cv::Mat mDistortionMatrix;
+    cv::Size mCameraSize;
 
 public:
-    DetectorSimple( float aSizeOfMarker = 0.025 );
+    DetectorSimple( float aSizeOfMarker = 0.025, int aSizeOfImageX = 800, int aSizeOfImageY = 600 );
     virtual ~DetectorSimple();
-
-    virtual void setParameter( parameter aParameter, void* aValue );
-    virtual void getParameter( parameter aParameter, void* aValue );
     virtual void setStatus( bool aStatus );
+
+    virtual void setCameraFile( QString aCameraFileName );
+    virtual void setThreshold( int aThreshold );
+    virtual int getThreshold();
+    void setDetectionArea( int aMinX, int aMaxX, int aMinY, int aMaxY );
 
 public slots:
     virtual void detectMarkers( const cv::Mat& aImage );

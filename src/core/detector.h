@@ -26,9 +26,10 @@ class Detector : public QObject{
 public:
     virtual ~Detector(){};
 
-    virtual void setParameter( parameter aParameter, void* aValue ) = 0;
-    virtual void getParameter( parameter aParameter, void* aValue ) = 0;
     virtual void setStatus( bool aStatus ) = 0;
+    virtual void setCameraFile( QString aCameraFileName ) = 0;
+    virtual void setThreshold( int aThreshold ) = 0;
+    virtual int getThreshold() = 0;
 
 public slots:
     virtual void detectMarkers( const cv::Mat& aImage ) = 0;
