@@ -179,7 +179,7 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     mUi->lEDARightBorder->setText( QString::number(800) );
     mUi->lEDALowerBorder->setText( QString::number(600) );
 
-    connect( mUi->cBShowMarker, SIGNAL( clicked( bool ) ), mCamera, SLOT( connectLiveMarker( bool ) ) );
+    connect( mUi->cBShowMarker, SIGNAL( clicked( bool ) ), this, SLOT( connectLiveMarker( bool ) ) );
 
 }
 
@@ -202,12 +202,19 @@ void CameraGui::connectLiveMarker( bool aChecked ){
     if(aChecked){
 
         connect( mDetector, SIGNAL( markersDetected( std::vector<DetectedMarker> ) ), this, SLOT( saveCurrentMarkers( std::vector<DetectedMarker> ) ) );
-gdsgdsgdssdg
+
     } else {
 
         disconnect( mDetector, SIGNAL( markersDetected( std::vector<DetectedMarker> ) ), this, SLOT( saveCurrentMarkers( std::vector<DetectedMarker> ) ) );
 
     }
+
+}
+
+
+void CameraGui::saveCurrentMarkers( const std::vector<DetectedMarker>& aListOfMarkers ){
+
+    mListOfMarkers = std::vector<DetectedMarker>( aListOfMarkers );
 
 }
 
@@ -625,7 +632,7 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
 
         QPixmap vPixmap;
 
-        QPen LinePenRed(Qt::red,1), LinePenGreen(Qt::green,1), LinePenBlue(Qt::blue,1), LinePenYellow(Qt::yellow,1), LinePenWhite(Qt::white,1);
+        QPen LinePenRed(Qt::red,1), LinePenRedFat(Qt::red,5), LinePenGreen(Qt::green,1), LinePenBlue(Qt::blue,1), LinePenYellow(Qt::yellow,1), LinePenWhite(Qt::white,1);
 
         QVector<QRgb> vColorTable;
         for (int i=0; i<256; i++){
@@ -693,6 +700,31 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
             painter.fillRect(0, 0, mUi->lEDALeftBorder->text().toInt(), vPixmap.height(), Qt::SolidPattern );
             painter.fillRect(mUi->lEDARightBorder->text().toInt() , 0, vPixmap.width(), vPixmap.height(), Qt::SolidPattern );
             painter.fillRect(0, mUi->lEDALowerBorder->text().toInt() , vPixmap.width(), vPixmap.height(), Qt::SolidPattern );
+
+            painter.end();
+
+        }
+        if( mUi->cBShowMarker->isChecked() ){
+            std::vector<DetectedMarker> vListOfMarkers(mListOfMarkers);
+            QPainter painter( &vPixmap );
+            for( DetectedMarker vMarker : vListOfMarkers ){
+
+                QLineF angleline;
+                angleline.setP1(QPointF(vMarker.mMarkerPosition.x,vMarker.mMarkerPosition.y));
+
+                angleline.setAngle(vMarker.mMarkerDirection*-1);
+                angleline.setLength(5);
+
+                painter.setPen( LinePenRedFat );
+                painter.drawLine(angleline);
+
+                angleline.setLength(15);
+                painter.setPen( LinePenRed );
+                painter.drawLine(angleline);
+                painter.setPen( LinePenYellow );
+                painter.drawText(vMarker.mMarkerPosition.x,vMarker.mMarkerPosition.y, QString::number(vMarker.mMarkerId));
+
+            }
 
             painter.end();
 

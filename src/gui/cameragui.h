@@ -27,6 +27,7 @@ class CameraGui : public QWidget
 	DetectorSimple* mDetector;
 
 	QList<MarkerGui*> mKnownMarkers;
+	std::vector<DetectedMarker> mListOfMarkers;
 
 	bool mActiveInterface, mTakeScreenshot;
 
@@ -74,6 +75,7 @@ public slots:
     void streamVideo( const cv::Mat& aVideoFrame );
     void streamFoundMarkers( const cv::Mat& aImage, const QList<bool>& aMarker );
     void connectLiveMarker( bool aChecked );
+    void saveCurrentMarkers( const std::vector<DetectedMarker>& aListOfMarkers );
 
 signals:
     void newPicture( const QPixmap & );
