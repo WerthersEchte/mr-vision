@@ -13,7 +13,7 @@ find_package( Qt5Core REQUIRED )
 find_package( Qt5Gui REQUIRED )
 find_package( Qt5Concurrent REQUIRED )
 
-find_package( aruco REQUIRED )
+# find_package( aruco REQUIRED )
 
 find_package( OpenCV REQUIRED )
 FIND_PACKAGE( Boost COMPONENTS system regex REQUIRED )

@@ -16,7 +16,7 @@
 #include <QJsonObject>
 #include <QMessageLogger>
 
-#include <aruco/aruco.h>
+// #include <aruco/aruco.h>
 
 #include <iostream>
 #include <limits>
@@ -239,6 +239,10 @@ void CameraGui::saveCameraGuiConfig( bool aDummy )
     vBorders["LRBorderLeft"] = mUi->lELeftBorder->text();
     vBorders["LRBorderRight"] = mUi->lERightBorder->text();
     vBorders["LRBorderOffset"] = mUi->lELROffset->text();
+    vBorders["DetectionAreaUpperBorder"] = mUi->lEDAUpperBorder->text();
+    vBorders["DetectionAreaLowerBorder"] = mUi->lEDALowerBorder->text();
+    vBorders["DetectionAreaRightBorder"] = mUi->lEDARightBorder->text();
+    vBorders["DetectionAreaLeftBorder"] = mUi->lEDALeftBorder->text();
 
     vFeatures["Shutter"] = mUi->gBShutter->isChecked();
     vFeatures["ShutterValue"] = mUi->lEShutter->text();
@@ -299,6 +303,10 @@ void CameraGui::loadCameraGuiConfig( bool aDummy )
     mUi->lELeftBorder->setText( vBorders["LRBorderLeft"].toString() );
     mUi->lERightBorder->setText( vBorders["LRBorderRight"].toString() );
     mUi->lELROffset->setText( vBorders["LRBorderOffset"].toString() );
+    mUi->lEDAUpperBorder->setText( vBorders["DetectionAreaUpperBorder"].toString() );
+    mUi->lEDALowerBorder->setText( vBorders["DetectionAreaLowerBorder"].toString() );
+    mUi->lEDARightBorder->setText( vBorders["DetectionAreaRightBorder"].toString() );
+    mUi->lEDALeftBorder->setText( vBorders["DetectionAreaLeftBorder"].toString() );
     setBorderData();
 
     mUi->gBShutter->setChecked( vFeatures["Shutter"].toBool() );

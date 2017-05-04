@@ -10,6 +10,14 @@
 
 namespace mrvision {
 
+int handleError( int status, const char* func_name,
+            const char* err_msg, const char* file_name,
+            int line, void* userdata )
+{
+    //Do nothing -- will suppress console output
+    return 0;   //Return value is not used
+}
+
 DetectorSimple::DetectorSimple( float aSizeOfMarker, int aSizeOfImageX, int aSizeOfImageY ) :
     mThreshold(150),
     mMinSize(8),
@@ -20,7 +28,7 @@ DetectorSimple::DetectorSimple( float aSizeOfMarker, int aSizeOfImageX, int aSiz
     mBinaryImage(),
     mPoints(), mArea(), mRealPoints(),
     mCounterI(0), mCounterJ(0), mCounterK(0), mCounterL(0),
-    mMaxRangeBetweenPoints(400), mMinRangeBetweenPoints(64),
+    mMaxRangeBetweenPoints(3600), mMinRangeBetweenPoints(625),
     mDistanceBetweenPoints(),
     mFoundCombinations(),
     mPointA(0), mPointB(0), mPointC(0), mPointD(0),
@@ -30,12 +38,15 @@ DetectorSimple::DetectorSimple( float aSizeOfMarker, int aSizeOfImageX, int aSiz
 {
 
     qRegisterMetaType< cv::Mat >("cv::Mat");
+    cv::redirectError(handleError);
 
     //connect( &mDetector, SIGNAL( showMarkerAndImage( cv::Mat, QList<bool> ) ), this, SLOT( blahMarkerAndImage( cv::Mat, QList<bool> ) ) );
 
 }
 
 DetectorSimple::~DetectorSimple(){}
+
+static double gImageCounter = 0, gFoundRectCounter = 0, gFoundMarkerCounter = 0;
 
 void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
 
@@ -55,7 +66,9 @@ void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
                                      ),
                                      mPoints );
     } catch( cv::Exception vNoPointsDetected ){
-        std::cout << "No Points detected!\n" << std::endl;
+        //std::cout << "No Points detected!\n" << std::endl;
+        isRunning = false;
+        return;
     }
 
     while( !mPoints.empty() ){
@@ -72,11 +85,11 @@ void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
                 if( mArea[mCounterI].y == mPoints[mCounterJ].y && mArea[mCounterI].x + 1 == mPoints[mCounterJ].x ||
                     mArea[mCounterI].y == mPoints[mCounterJ].y && mArea[mCounterI].x - 1 == mPoints[mCounterJ].x ||
                     mArea[mCounterI].y + 1 == mPoints[mCounterJ].y && mArea[mCounterI].x == mPoints[mCounterJ].x ||
-                    mArea[mCounterI].y - 1 == mPoints[mCounterJ].y && mArea[mCounterI].x == mPoints[mCounterJ].x ||
+                    mArea[mCounterI].y - 1 == mPoints[mCounterJ].y && mArea[mCounterI].x == mPoints[mCounterJ].x /*||
                     mArea[mCounterI].y + 1 == mPoints[mCounterJ].y && mArea[mCounterI].x + 1 == mPoints[mCounterJ].x ||
                     mArea[mCounterI].y - 1 == mPoints[mCounterJ].y && mArea[mCounterI].x - 1 == mPoints[mCounterJ].x ||
                     mArea[mCounterI].y - 1 == mPoints[mCounterJ].y && mArea[mCounterI].x + 1 == mPoints[mCounterJ].x ||
-                    mArea[mCounterI].y + 1 == mPoints[mCounterJ].y && mArea[mCounterI].x - 1 == mPoints[mCounterJ].x ){
+                    mArea[mCounterI].y + 1 == mPoints[mCounterJ].y && mArea[mCounterI].x - 1 == mPoints[mCounterJ].x */ ){
 
                     mArea.push_back( mPoints[mCounterJ] );
                     mPoints.erase( mPoints.begin() + mCounterJ );
@@ -95,6 +108,13 @@ void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
 
         mRealPoints.back().x /= mArea.size();
         mRealPoints.back().y /= mArea.size();
+
+    }
+
+    if( mRealPoints.size() > 1000 ){
+
+        isRunning = false;
+        return;
 
     }
 
@@ -245,10 +265,14 @@ void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
     }
 
 
-
+    //std::string vImagename = "images/image_" + std::to_string(static_cast<int>(gImageCounter++)) + "_" + std::to_string(mFoundCombinations.size()) + "_" + std::to_string(vFoundMarkers.size()) + "_marker_detected.png";
+    //cv::imwrite( vImagename, aImage );
     if( vFoundMarkers.size() ){
         emit markersDetected( vFoundMarkers );
     }
+    if( mFoundCombinations.size() ) {++gFoundRectCounter;}
+    if( vFoundMarkers.size() ) {++gFoundMarkerCounter;}
+    //std::cout << '\r' << "Rect/Image: " << std::to_string(gFoundRectCounter/gImageCounter) << " Marker/Image: " << std::to_string(gFoundMarkerCounter/gImageCounter) << " Marker/Rect: "<< std::to_string(gFoundMarkerCounter/gFoundRectCounter) << std::flush;
     isRunning = false;
 
 }
@@ -313,6 +337,8 @@ void DetectorSimple::detectMarkers( const cv::Mat& aImage ){
 
 }
 
+static int gCounter = 0;
+
 bool DetectorSimple::identifyMarker( DetectedMarker& aNotYetFoundMarker ){
 
     cv::Mat vPart, vColorPart;
@@ -345,9 +371,16 @@ bool DetectorSimple::identifyMarker( DetectedMarker& aNotYetFoundMarker ){
 		if( vTest.compareTo( aNotYetFoundMarker.mMarker, vRotations ) ){
             aNotYetFoundMarker.mMarkerDirection += 270 - vRotations*90;
             aNotYetFoundMarker.mMarkerId = vTest.getId();
+
+            //std::string vImagename = "images/marker_" + std::to_string(gImageCounter) + "_" + std::to_string(aNotYetFoundMarker.mMarkerId) + "_" + std::to_string(vRotations) + "_" + std::to_string(gCounter++) + ".png";
+            //cv::imwrite( vImagename, aNotYetFoundMarker.mMarkerImage );
+
 			return true;
 		}
     }
+
+    //std::string vImagename = "images/marker_" + std::to_string(gImageCounter) + "_-1_-1_" + std::to_string(gCounter++) + ".png";
+    //cv::imwrite( vImagename, aNotYetFoundMarker.mMarkerImage );
 
     return false;
 }

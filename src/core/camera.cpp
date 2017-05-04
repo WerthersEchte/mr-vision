@@ -22,7 +22,7 @@ Camera::Camera( dc1394camera_t *aCamera ) :
 
     dc1394_video_set_iso_speed(mCamera, DC1394_ISO_SPEED_400);
 
-    dc1394_video_set_mode(mCamera, DC1394_VIDEO_MODE_800x600_MONO8);
+    dc1394_video_set_mode(mCamera, DC1394_VIDEO_MODE_640x480_MONO8);
 
     dc1394_video_set_framerate(mCamera, DC1394_FRAMERATE_30);
 

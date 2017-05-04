@@ -8,7 +8,7 @@
 #include <dc1394/control.h>
 #include <QList>
 #include "opencv2/opencv.hpp"
-#include <aruco/aruco.h>
+//#include <aruco/aruco.h>
 
 #include <QThread>
 
