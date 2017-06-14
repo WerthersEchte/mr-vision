@@ -14,11 +14,15 @@ find_package( Qt5Gui REQUIRED )
 find_package( Qt5Concurrent REQUIRED )
 
 # find_package( aruco REQUIRED )
-
-find_package( OpenCV REQUIRED )
+set(OpenCV_DIR "D:/tools/opencv/build/x64/vc14/lib")
+find_package( OpenCV REQUIRED ) # in vs maybe use nuget
+# SET( BOOST_ROOT $ENV(BOOST_ROOT) )
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_MULTITHREADED ON)
 FIND_PACKAGE( Boost COMPONENTS system regex REQUIRED )
 
-include_directories( ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} )
+include_directories( ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "C:/Users/roboticlab/Documents/IC Imaging Control 3.4/classlib/include" )
+LINK_DIRECTORIES("C:/Users/roboticlab/Documents/IC Imaging Control 3.4/classlib/x64" ${Boost_LIBRARY_DIRS})
 
 set( SOURCE
    ${SOURCE}
@@ -71,4 +75,4 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_executable( ${MAIN_NAME} WIN32 ${SOURCE} ${HEADERS} ${UI_HEADERS} ${UI_FILES} )
 
 qt5_use_modules( ${MAIN_NAME} Widgets Core Gui )
-target_link_libraries( ${MAIN_NAME} ${OpenCV_LIBS} ${aruco_LIBS} /usr/lib/x86_64-linux-gnu/libdc1394.so ${Boost_LIBRARIES} )
+target_link_libraries( ${MAIN_NAME} ${OpenCV_LIBS} ${aruco_LIBS} optimized TIS_UDSHL11_x64 debug TIS_UDSHL11d_x64 ${Boost_LIBRARIES} )

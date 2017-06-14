@@ -1,25 +1,38 @@
 #ifndef _camera_h
 #define _camera_h
 
+#include <boost/thread.hpp>
+
+#include <boost/chrono.hpp>
+#include <boost/asio.hpp>
+#include <boost/lockfree/queue.hpp>
+#include "tisudshl.h"
+
 #include "src/core/bot.h"
 #include "src/core/detectedmarker.h"
 
-#include <dc1394/dc1394.h>
-#include <dc1394/control.h>
+// #include <dc1394/dc1394.h>
+// #include <dc1394/control.h>
 #include <QList>
 #include "opencv2/opencv.hpp"
-//#include <aruco/aruco.h>
 
 #include <QThread>
+#include <QMutex>
 
 namespace mrvision {
 
 class Camera: public QThread {
 
-    Q_OBJECT
+	Q_OBJECT
 
-    dc1394camera_t *mCamera;
-    dc1394video_frame_t *mLastVideoframe;
+private:
+	static QMutex *mMutex;
+
+	DShowLib::Grabber::tVideoCaptureDeviceItem mCameraId;
+	DShowLib::Grabber mCamera;
+	DShowLib::tFrameHandlerSinkPtr mSink;
+	DShowLib::FrameTypeInfo mInfo;
+	BYTE* mBuffer[1];
 
     unsigned int mCameraImageHeight, mCameraImageWidth;
 
@@ -28,8 +41,7 @@ class Camera: public QThread {
 public:
     int mLowerX, mLowerY, mUpperX, mUpperY, mULMultiplier, mLRMultiplier;
 
-    Camera( int aId );
-	Camera( dc1394camera_t *aCamera );
+    Camera( DShowLib::Grabber::tVideoCaptureDeviceItem aCameraIdent );
     ~Camera();
 
     void startVideoCapture();
@@ -47,7 +59,7 @@ public:
 
     bool isValid();
 
-    uint64_t getId();
+	std::string getId();
 
     static QList<Camera*> findCameras();
 
@@ -72,7 +84,7 @@ private:
     void run();
     void calculateBotPositions( const std::vector<DetectedMarker>& aListOfMarkers );
 
-    void getFeatureMinMax( dc1394feature_t aFeature, unsigned int* aMin, unsigned int* aMax );
+    //void getFeatureMinMax( dc1394feature_t aFeature, unsigned int* aMin, unsigned int* aMax );
 
 };
 

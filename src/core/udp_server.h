@@ -1,8 +1,10 @@
 #ifndef _udp_server_h
 #define _udp_server_h
 
+#define WIN32_LEAN_AND_MEAN 1
 #include <boost/asio.hpp>
 #include <boost/lockfree/queue.hpp>
+#include "tisudshl.h"
 
 #include <map>
 #include "bot.h"

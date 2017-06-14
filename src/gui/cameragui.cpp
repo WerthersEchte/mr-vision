@@ -35,8 +35,8 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
 {
     mUi->setupUi(this);
 
-    mUi->lblName->setText( QString::number( mCamera->getId() ) );
-    mUi->lEScreenshotName->setText( QString::number(mCamera->getId()) + "_" );
+    mUi->lblName->setText( QString::fromStdString( mCamera->getId() ) );
+    mUi->lEScreenshotName->setText( QString::fromStdString(mCamera->getId()) + "_" );
     connect( mUi->pBActivateControls, SIGNAL( clicked( bool ) ), this, SLOT( showInterface( bool ) ) );
 
     float vMakerSize = 1.0;
@@ -253,7 +253,7 @@ void CameraGui::saveCameraGuiConfig( bool aDummy )
     vFeatures["Sharpness"] = mUi->gBSharpness->isChecked();
     vFeatures["SharpnessValue"] = mUi->lESharpness->text();
 
-    vCameraConfigData["CameraGUID"] = QString::number(mCamera->getId());
+    vCameraConfigData["CameraGUID"] = QString::fromStdString(mCamera->getId());
     vCameraConfigData["Detection"] = vDetectionConfigData;
     vCameraConfigData["Borders"] = vBorders;
     vCameraConfigData["Features"] = vFeatures;
@@ -279,7 +279,7 @@ void CameraGui::loadCameraGuiConfig( bool aDummy )
     QJsonDocument vSavedCamera( QJsonDocument::fromJson(saveData) );
     QJsonObject vCameraConfigData( vSavedCamera.object() );
 
-    if( vCameraConfigData["CameraGUID"].toString().compare( QString::number(mCamera->getId()) ) ){
+    if( vCameraConfigData["CameraGUID"].toString().compare( QString::fromStdString(mCamera->getId()) ) ){
 
         std::cout << "Not the same camera! (" << vCameraConfigData["CameraGUID"].toString().toStdString() << " != " << mCamera->getId() << ")" << std::endl;
 

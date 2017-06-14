@@ -8,42 +8,40 @@
 
 namespace mrvision {
 
-Camera::Camera( dc1394camera_t *aCamera ) :
-        mCamera(aCamera),
-        mLastVideoframe(nullptr),
-        mIsFetchingVideoframes(false)
+Camera::Camera(DShowLib::Grabber::tVideoCaptureDeviceItem aCameraIdent) :
+	mCameraId(aCameraIdent)
 {
+	mCamera.openDev(aCameraIdent);
+	mCamera.setVideoFormat("Y800 (640x480)");
+	mCamera.setOverlayBitmapPathPosition(DShowLib::ePP_NONE);
+	mCamera.setFPS(60.0);
 
-    if( !aCamera ){
-        return;
-    }
+	DShowLib::Grabber::tVidFmtListPtr vTest = mCamera.getAvailableVideoFormats();
+	for (int vI = 0;vI < vTest.get()->size() ;++vI) {
+		std::cout << vTest.get()->at(vI).c_str() << std::endl;
+	}
 
-    //TODO: need to check for errors
+	std::cout << mCamera.getFPS() << " " << mCamera.getFrameRate() << " " << mCamera.getVideoFormat().c_str() << std::endl;
 
-    dc1394_video_set_iso_speed(mCamera, DC1394_ISO_SPEED_400);
+	mSink = DShowLib::FrameHandlerSink::create(DShowLib::eY800, 1);
+	mSink->setSnapMode(true);
+	mCamera.setSinkType(mSink);
+	
+	if (!mCamera.prepareLive(false))
+	{
+		std::cerr << "Could not render the VideoFormat into a eY800 sink.";
+	}
 
-    dc1394_video_set_mode(mCamera, DC1394_VIDEO_MODE_640x480_MONO8);
+	mSink->getOutputFrameType(mInfo);
 
-    dc1394_video_set_framerate(mCamera, DC1394_FRAMERATE_30);
+	mBuffer[0] = new BYTE[mInfo.buffersize];
 
-    dc1394_capture_setup(mCamera, 4, DC1394_CAPTURE_FLAGS_DEFAULT);
-
-    dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
-    dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
-    dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_AUTO);
-    dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_AUTO);
-
-
-    dc1394_feature_set_mode(mCamera, DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_MANUAL);
-    dc1394_feature_whitebalance_set_value(mCamera, 0, 0);
-    dc1394_feature_set_power(mCamera, DC1394_FEATURE_TRIGGER, DC1394_OFF);
-    dc1394_feature_set_power(mCamera, DC1394_FEATURE_TEMPERATURE, DC1394_OFF);
-    dc1394_feature_set_power(mCamera, DC1394_FEATURE_HUE, DC1394_OFF);
-    dc1394_feature_set_power(mCamera, DC1394_FEATURE_SATURATION, DC1394_OFF);
-
-    dc1394_video_set_transmission(mCamera, DC1394_ON);
-
-    dc1394_get_image_size_from_video_mode(mCamera, DC1394_VIDEO_MODE_800x600_MONO8, &mCameraImageWidth, &mCameraImageHeight);
+	// Create a new MemBuffer collection that uses our own image buffers.
+	DShowLib::tMemBufferCollectionPtr pCollection = DShowLib::MemBufferCollection::create(mInfo, 1, mBuffer);
+	if (pCollection == 0 || !mSink->setMemBufferCollection(pCollection))
+	{
+		std::cerr << "Could not set the new MemBufferCollection, because types do not match." << mCamera.getLastError() << std::endl;
+	}
 
 }
 
@@ -53,10 +51,7 @@ Camera::~Camera(){
         while( isRunning() ){
             mIsFetchingVideoframes = false;
         }
-        dc1394_video_set_transmission(mCamera, DC1394_OFF);
-        dc1394_capture_stop(mCamera);
-        dc1394_camera_free(mCamera);
-
+		mCamera.closeDev();
     }
 
 }
@@ -77,40 +72,40 @@ void Camera::stopVideoCapture(){
 
 void Camera::getShutterMinMax( unsigned int* aMin, unsigned int* aMax ){
 
-    getFeatureMinMax( DC1394_FEATURE_SHUTTER, aMin, aMax );
+    //getFeatureMinMax( DC1394_FEATURE_SHUTTER, aMin, aMax );
 
 }
 void Camera::getGainMinMax( unsigned int* aMin, unsigned int* aMax ){
 
-    getFeatureMinMax( DC1394_FEATURE_GAIN, aMin, aMax );
+    //getFeatureMinMax( DC1394_FEATURE_GAIN, aMin, aMax );
 
 }
 void Camera::getGammaMinMax( unsigned int* aMin, unsigned int* aMax ){
 
-    getFeatureMinMax( DC1394_FEATURE_GAMMA, aMin, aMax );
+    //getFeatureMinMax( DC1394_FEATURE_GAMMA, aMin, aMax );
 
 }
 void Camera::getSharpnessMinMax( unsigned int* aMin, unsigned int* aMax ){
 
-    getFeatureMinMax( DC1394_FEATURE_SHARPNESS, aMin, aMax );
+    //getFeatureMinMax( DC1394_FEATURE_SHARPNESS, aMin, aMax );
 
 }
-
+/*
 void Camera::getFeatureMinMax( dc1394feature_t aFeature, unsigned int* aMin, unsigned int* aMax ){
 
     if( isValid() ){
-        dc1394_feature_get_boundaries( mCamera, aFeature, aMin, aMax );
+        //dc1394_feature_get_boundaries( mCamera, aFeature, aMin, aMax );
     }
 
 }
-
+*/
 void Camera::setShutterMode( bool aManual ){
 
     if( isValid() ){
         if( aManual ){
-            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_MANUAL);
+            //dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_MANUAL);
         } else {
-            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
+            //dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
         }
     }
 
@@ -120,7 +115,7 @@ void Camera::setShutter( int aShutterTime ){
 
     if( isValid() ){
 
-        dc1394_feature_set_value(mCamera, DC1394_FEATURE_SHUTTER, aShutterTime);
+        //dc1394_feature_set_value(mCamera, DC1394_FEATURE_SHUTTER, aShutterTime);
 
     }
 
@@ -130,7 +125,7 @@ int Camera::getShutter(){
 
     unsigned int vValue = 0;
     if( isValid() ){
-        dc1394_feature_get_value(mCamera, DC1394_FEATURE_SHUTTER, &vValue);
+        //dc1394_feature_get_value(mCamera, DC1394_FEATURE_SHUTTER, &vValue);
 
     }
     return vValue;
@@ -141,9 +136,9 @@ void Camera::setGainMode( bool aManual ){
 
     if( isValid() ){
         if( aManual ){
-            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_MANUAL);
+            //dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_MANUAL);
         } else {
-            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
+            //dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
         }
     }
 
@@ -153,7 +148,7 @@ void Camera::setGain( int aGain ){
 
     if( isValid() ){
 
-        dc1394_feature_set_value(mCamera, DC1394_FEATURE_GAIN, aGain );
+       // dc1394_feature_set_value(mCamera, DC1394_FEATURE_GAIN, aGain );
 
     }
 
@@ -163,7 +158,7 @@ int Camera::getGain(){
 
     unsigned int vValue = 0;
     if( isValid() ){
-        dc1394_feature_get_value(mCamera, DC1394_FEATURE_GAIN, &vValue);
+       // dc1394_feature_get_value(mCamera, DC1394_FEATURE_GAIN, &vValue);
 
     }
     return vValue;
@@ -175,9 +170,9 @@ void Camera::setGammaMode( bool aManual ){
 
     if( isValid() ){
         if( aManual ){
-            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_MANUAL);
+           // dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_MANUAL);
         } else {
-            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_AUTO);
+           // dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_AUTO);
         }
     }
 
@@ -186,7 +181,7 @@ void Camera::setGamma( int aGamma ){
 
     if( isValid() ){
 
-        dc1394_feature_set_value(mCamera, DC1394_FEATURE_GAMMA, aGamma );
+        //dc1394_feature_set_value(mCamera, DC1394_FEATURE_GAMMA, aGamma );
 
     }
 
@@ -196,7 +191,7 @@ int Camera::getGamma(){
 
     unsigned int vValue = 0;
     if( isValid() ){
-        dc1394_feature_get_value(mCamera, DC1394_FEATURE_GAMMA, &vValue);
+        //dc1394_feature_get_value(mCamera, DC1394_FEATURE_GAMMA, &vValue);
 
     }
     return vValue;
@@ -208,9 +203,9 @@ void Camera::setSharpnessMode( bool aManual ){
 
     if( isValid() ){
         if( aManual ){
-            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_MANUAL);
+           // dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_MANUAL);
         } else {
-            dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_AUTO);
+           // dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_AUTO);
         }
     }
 
@@ -219,7 +214,7 @@ void Camera::setSharpness( int aSharpness ){
 
     if( isValid() ){
 
-        dc1394_feature_set_value(mCamera, DC1394_FEATURE_SHARPNESS, aSharpness );
+        //dc1394_feature_set_value(mCamera, DC1394_FEATURE_SHARPNESS, aSharpness );
 
     }
 
@@ -229,7 +224,7 @@ int Camera::getSharpness(){
 
     unsigned int vValue = 0;
     if( isValid() ){
-        dc1394_feature_get_value(mCamera, DC1394_FEATURE_SHARPNESS, &vValue);
+       // dc1394_feature_get_value(mCamera, DC1394_FEATURE_SHARPNESS, &vValue);
 
     }
     return vValue;
@@ -238,13 +233,13 @@ int Camera::getSharpness(){
 
 bool Camera::isValid(){
 
-    return mCamera!=nullptr;
+	return mCamera.isDevOpen() && mCamera.isDevValid();
 
 }
 
-uint64_t Camera::getId(){
+std::string Camera::getId(){
 
-    return mCamera->guid;
+	return mCameraId.getName();
 
 }
 
@@ -272,59 +267,44 @@ void Camera::calculateBotPositions( const std::vector<DetectedMarker>& aListOfMa
 
 }
 
+QMutex *Camera::mMutex = new QMutex();
+
 void Camera::run(){
 
     mIsFetchingVideoframes = true;
+	cv::Mat vCurrentFrame = cv::Mat(mInfo.dim.cy, mInfo.dim.cx, CV_8UC1);
+
+	bool vTookFrame = false;
+
+	mCamera.startLive(false);
 
     while( mIsFetchingVideoframes ){
 
-        dc1394_capture_dequeue(mCamera, DC1394_CAPTURE_POLICY_WAIT, &mLastVideoframe);
-        cv::Mat vCurrentFrame( mCameraImageHeight, mCameraImageWidth, CV_8UC1, mLastVideoframe->image );
-        dc1394_capture_enqueue( mCamera, mLastVideoframe);
+		mSink->snapImages(1);
 
-        emit newVideoFrame( vCurrentFrame );
+		memcpy(vCurrentFrame.ptr(), mBuffer[0], mInfo.buffersize);
+		emit newVideoFrame(vCurrentFrame);
 
     }
 
+	mCamera.suspendLive();
+	mCamera.stopLive();
 }
 
 QList<Camera*> Camera::findCameras(){
 
     QList<Camera*> vCameraList;
+	
+	DShowLib::InitLibrary();
+	DShowLib::Grabber vGrabber;
+	DShowLib::Grabber::tVidCapDevListPtr vListOfDevices = vGrabber.getAvailableVideoCaptureDevices();
 
-    dc1394_t *d;
-    dc1394camera_list_t *list;
-    dc1394error_t err;
-
-    d = dc1394_new();
-    if ( d ){
-
-        err = dc1394_camera_enumerate( d, &list );
-        if( err != DC1394_SUCCESS){
-
-            dc1394_log_error( "Failed to enumerate cameras (Errorcode %d)", err);
-            return vCameraList;
-
-        }
-
-        for( int i = 0; i < list->num; i++){
-
-            vCameraList.append( new Camera( dc1394_camera_new ( d, list->ids[i].guid) ) );
-
-            if( !vCameraList.empty() && !vCameraList.last() ){
-
-                vCameraList.removeLast();
-                dc1394_log_error( "Failed to initialize camera with guid %llx", list->ids[i].guid);
-
-            }
-
-        }
-
-    }
-    dc1394_camera_free_list (list);
+	for (int vI = 0; vI < vListOfDevices.get()->size(); ++vI) {
+		vCameraList.append(new Camera(vListOfDevices.get()->at(vI)));
+	}
 
     return vCameraList;
-
+	
 }
 
 }
