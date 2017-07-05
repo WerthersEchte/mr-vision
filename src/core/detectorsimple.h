@@ -17,7 +17,10 @@ static MarkerList MARKERLIST;
 
 class DetectorSimple : public Detector{
 
-    Q_OBJECT
+	Q_OBJECT
+
+
+	int mIteration;
 
     int mThreshold;
     int mMinSize, mMaxSize;
@@ -52,8 +55,6 @@ public:
 
 public slots:
     virtual void detectMarkers( const cv::Mat& aImage );
-
-    void blahMarkerAndImage( const cv::Mat& aImage, const QList<bool>& aMarker );
 
 private:
     bool checkForDuplicates( int vA, int vB, int vC, int vD );

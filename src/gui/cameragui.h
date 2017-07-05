@@ -30,6 +30,7 @@ class CameraGui : public QWidget
 	std::vector<DetectedMarker> mListOfMarkers;
 
 	bool mActiveInterface, mTakeScreenshot;
+	int mCurrentMarkerIteration;
 
 public:
     explicit CameraGui( Camera *aCamera, QWidget *aParent = 0 );
@@ -48,7 +49,6 @@ private slots:
     void showCameraData( bool aShow = false );
 
     void paintPicture(const QPixmap &aPicture);
-    void paintMarkerPicture(const QPixmap &aMarkerPic,const QPixmap &aFoundMarker);
 
     void setCameraFile();
     void setMarkerSize();
@@ -73,7 +73,7 @@ private slots:
 
 public slots:
     void streamVideo( const cv::Mat& aVideoFrame );
-    void streamFoundMarkers( const cv::Mat& aImage, const QList<bool>& aMarker );
+    void showPotentialMarkers( const cv::Mat& aImage, const int& aIteration );
     void connectLiveMarker( bool aChecked );
     void saveCurrentMarkers( const std::vector<DetectedMarker>& aListOfMarkers );
 
@@ -83,7 +83,6 @@ signals:
 
 private:
     void createPictureFromVideoframe( const cv::Mat& aVideoFrame );
-    void createMarkerPictures( const cv::Mat& aImage, const QList<bool>& aMarker );
 
 };
 

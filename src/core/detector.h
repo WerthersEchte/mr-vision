@@ -36,7 +36,7 @@ public slots:
 
 signals:
     void markersDetected( const std::vector<DetectedMarker>& aListOfMarkers );
-    void showMarkerAndImage( const cv::Mat& aImage, const QList<bool>& aMarker );
+    void showPotentialMarker( const cv::Mat& aImage, const int& aIteration );
 
 };
 

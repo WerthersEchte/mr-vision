@@ -73,21 +73,32 @@ void Camera::stopVideoCapture(){
 void Camera::getShutterMinMax( unsigned int* aMin, unsigned int* aMax ){
 
     //getFeatureMinMax( DC1394_FEATURE_SHUTTER, aMin, aMax );
-
+	DShowLib::tsPropertyRange vRange = mCamera.getPropertyRange(DShowLib::Grabber::tCameraPropertyEnum::CameraControl_Exposure);
+	*aMin = vRange.min;
+	*aMax = vRange.max;
 }
 void Camera::getGainMinMax( unsigned int* aMin, unsigned int* aMax ){
 
     //getFeatureMinMax( DC1394_FEATURE_GAIN, aMin, aMax );
+	DShowLib::tsPropertyRange vRange = mCamera.getPropertyRange(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gain);
+	*aMin = vRange.min;
+	*aMax = vRange.max;
 
 }
 void Camera::getGammaMinMax( unsigned int* aMin, unsigned int* aMax ){
 
     //getFeatureMinMax( DC1394_FEATURE_GAMMA, aMin, aMax );
+	DShowLib::tsPropertyRange vRange = mCamera.getPropertyRange(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gamma);
+	*aMin = vRange.min;
+	*aMax = vRange.max;
 
 }
 void Camera::getSharpnessMinMax( unsigned int* aMin, unsigned int* aMax ){
 
     //getFeatureMinMax( DC1394_FEATURE_SHARPNESS, aMin, aMax );
+	DShowLib::tsPropertyRange vRange = mCamera.getPropertyRange(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Sharpness);
+	*aMin = vRange.min;
+	*aMax = vRange.max;
 
 }
 /*
@@ -102,11 +113,7 @@ void Camera::getFeatureMinMax( dc1394feature_t aFeature, unsigned int* aMin, uns
 void Camera::setShutterMode( bool aManual ){
 
     if( isValid() ){
-        if( aManual ){
-            //dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_MANUAL);
-        } else {
-            //dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
-        }
+		mCamera.setProperty(DShowLib::Grabber::tCameraPropertyEnum::CameraControl_Exposure, !aManual);
     }
 
 }
@@ -114,8 +121,8 @@ void Camera::setShutterMode( bool aManual ){
 void Camera::setShutter( int aShutterTime ){
 
     if( isValid() ){
-
-        //dc1394_feature_set_value(mCamera, DC1394_FEATURE_SHUTTER, aShutterTime);
+		mCamera.setProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gain, false);
+		mCamera.setProperty(DShowLib::Grabber::tCameraPropertyEnum::CameraControl_Exposure, static_cast<long>(aShutterTime));
 
     }
 
@@ -125,8 +132,7 @@ int Camera::getShutter(){
 
     unsigned int vValue = 0;
     if( isValid() ){
-        //dc1394_feature_get_value(mCamera, DC1394_FEATURE_SHUTTER, &vValue);
-
+		vValue = mCamera.getProperty(DShowLib::Grabber::tCameraPropertyEnum::CameraControl_Exposure);
     }
     return vValue;
 
@@ -135,11 +141,7 @@ int Camera::getShutter(){
 void Camera::setGainMode( bool aManual ){
 
     if( isValid() ){
-        if( aManual ){
-            //dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_MANUAL);
-        } else {
-            //dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
-        }
+		mCamera.setProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gain, !aManual);
     }
 
 }
@@ -147,9 +149,8 @@ void Camera::setGainMode( bool aManual ){
 void Camera::setGain( int aGain ){
 
     if( isValid() ){
-
-       // dc1394_feature_set_value(mCamera, DC1394_FEATURE_GAIN, aGain );
-
+		mCamera.setProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gain, false);
+		mCamera.setProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gain, static_cast<long>(aGain));
     }
 
 }
@@ -158,8 +159,7 @@ int Camera::getGain(){
 
     unsigned int vValue = 0;
     if( isValid() ){
-       // dc1394_feature_get_value(mCamera, DC1394_FEATURE_GAIN, &vValue);
-
+		vValue = mCamera.getProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gain);
     }
     return vValue;
 
@@ -169,20 +169,15 @@ int Camera::getGain(){
 void Camera::setGammaMode( bool aManual ){
 
     if( isValid() ){
-        if( aManual ){
-           // dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_MANUAL);
-        } else {
-           // dc1394_feature_set_mode(mCamera, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_AUTO);
-        }
+		mCamera.setProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gamma, !aManual);
     }
 
 }
 void Camera::setGamma( int aGamma ){
 
     if( isValid() ){
-
-        //dc1394_feature_set_value(mCamera, DC1394_FEATURE_GAMMA, aGamma );
-
+		mCamera.setProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gamma, false);
+		mCamera.setProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gamma, static_cast<long>(aGamma));
     }
 
 }
@@ -191,8 +186,7 @@ int Camera::getGamma(){
 
     unsigned int vValue = 0;
     if( isValid() ){
-        //dc1394_feature_get_value(mCamera, DC1394_FEATURE_GAMMA, &vValue);
-
+		vValue = mCamera.getProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Gamma);
     }
     return vValue;
 
@@ -202,20 +196,15 @@ int Camera::getGamma(){
 void Camera::setSharpnessMode( bool aManual ){
 
     if( isValid() ){
-        if( aManual ){
-           // dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_MANUAL);
-        } else {
-           // dc1394_feature_set_mode(mCamera, DC1394_FEATURE_SHARPNESS, DC1394_FEATURE_MODE_AUTO);
-        }
+		mCamera.setProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Sharpness, !aManual);
     }
 
 }
 void Camera::setSharpness( int aSharpness ){
 
     if( isValid() ){
-
-        //dc1394_feature_set_value(mCamera, DC1394_FEATURE_SHARPNESS, aSharpness );
-
+		mCamera.setProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Sharpness, false);
+		mCamera.setProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Sharpness, static_cast<long>(aSharpness));
     }
 
 }
@@ -224,8 +213,7 @@ int Camera::getSharpness(){
 
     unsigned int vValue = 0;
     if( isValid() ){
-       // dc1394_feature_get_value(mCamera, DC1394_FEATURE_SHARPNESS, &vValue);
-
+		vValue = mCamera.getProperty(DShowLib::Grabber::tVideoPropertyEnum::VideoProcAmp_Sharpness);
     }
     return vValue;
 

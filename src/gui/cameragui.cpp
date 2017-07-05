@@ -163,7 +163,6 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     connect(mUi->pBSaveCameraConfig, SIGNAL( clicked( bool ) ), this, SLOT( saveCameraGuiConfig( bool ) ) );
     connect(mUi->pBLoadCameraConfig, SIGNAL( clicked( bool ) ), this, SLOT( loadCameraGuiConfig( bool ) ) );
 
-    connect( this, SIGNAL( newMarkerPixs( QPixmap, QPixmap ) ), this, SLOT( paintMarkerPicture( QPixmap, QPixmap ) ) );
     connect( mUi->gBMarkerDetectedPictures, SIGNAL( clicked( bool ) ), this, SLOT( startStreamingMarker( bool ) ) );
 
     connect( mUi->pBScreenshot, SIGNAL( clicked( bool ) ), this, SLOT( takeScreenshot( bool ) ) );
@@ -561,70 +560,32 @@ void CameraGui::startStreamingMarker( bool aStreaming ){
 
         qRegisterMetaType< cv::Mat >("cv::Mat");
 
-        connect( mDetector, SIGNAL( showMarkerAndImage( cv::Mat, QList<bool> ) ), this, SLOT( streamFoundMarkers( cv::Mat, QList<bool> ) ) );
-
-        mUi->lblMarkerImage->show();
-        mUi->lblMarkerDetect->show();
+        connect( mDetector, SIGNAL(showPotentialMarker( cv::Mat, int ) ), this, SLOT( showPotentialMarkers( cv::Mat, int ) ) );
 
     } else {
 
-        disconnect( mDetector, &Detector::showMarkerAndImage, this, &CameraGui::streamFoundMarkers );
-
-        mUi->lblMarkerImage->hide();
-        mUi->lblMarkerDetect->hide();
+        disconnect( mDetector, &Detector::showPotentialMarker, this, &CameraGui::showPotentialMarkers );
 
     }
 
 }
 
 
-void CameraGui::streamFoundMarkers( const cv::Mat& aImage, const QList<bool>& aMarker ){
+void CameraGui::showPotentialMarkers( const cv::Mat& aImage, const int& aIteration){
+	
+	if (mCurrentMarkerIteration != aIteration ) {
+		mCurrentMarkerIteration = aIteration;
+		delete mUi->gBMarkerDetectedPictures->layout();
 
-    QtConcurrent::run(this, &CameraGui::createMarkerPictures, aImage, aMarker);
+		FlowLayout *vLayout = new FlowLayout();
+		mUi->gBMarkerDetectedPictures->setLayout(vLayout);
 
-}
-
-void CameraGui::createMarkerPictures( const cv::Mat& aImage, const QList<bool>& aMarker ){
-
-    if( mUi->gBMarkerDetectedPictures->isChecked() ){
-
-        QPixmap vPixmap, vMarker(66, 66);
-
-        QVector<QRgb> vColorTable;
-        for (int i=0; i<256; i++){
-            vColorTable.push_back(qRgb(i,i,i));
-        }
-
-        QImage img((const uchar*)aImage.data, aImage.cols, aImage.rows, aImage.step, QImage::Format_Indexed8);
-        img.setColorTable(vColorTable);
-
-        vPixmap = QPixmap::fromImage( img );
-
-        QPainter painter(&vMarker);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        for( int vHeight = 0; vHeight < 3; ++vHeight ){
-
-            for( int vWidth = 0; vWidth < 3; ++vWidth ){
-
-                painter.fillRect( QRect( 66 / 3 * vWidth, 66 / 3 * vHeight,
-                                         66 / 3, 66 / 3 ),
-                                  aMarker.at( 3 * vHeight + vWidth ) ? Qt::white : Qt::black);
-
-            }
-
-        }
-
-        emit newMarkerPixs(vPixmap, vMarker);
-
-    }
-
-}
-
-void CameraGui::paintMarkerPicture(const QPixmap &aMarkerPic,const QPixmap &aFoundMarker){
-
-    mUi->lblMarkerImage->setPixmap(aMarkerPic);
-    mUi->lblMarkerDetect->setPixmap(aFoundMarker);
+	}
+	QImage vPotentialMarkerImage((const uchar*)aImage.data, aImage.cols, aImage.rows, aImage.step, QImage::Format_Indexed8);
+	QLabel* vPotentialMarker = new QLabel();
+	vPotentialMarker->setPixmap(QPixmap::fromImage(vPotentialMarkerImage));
+	
+	mUi->gBMarkerDetectedPictures->layout()->addWidget(vPotentialMarker);
 
 }
 
