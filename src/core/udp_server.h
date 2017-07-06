@@ -7,6 +7,7 @@
 #include "tisudshl.h"
 
 #include <map>
+#include <ctime>
 #include "bot.h"
 
 #include <QThread>
@@ -26,7 +27,7 @@ class UDPServer : public QThread{
 	boost::lockfree::queue<mrvision::Bot> mDataToSend;
 
 	int mPort, mPacketTime;
-
+	volatile clock_t mLastSend;
 	UDPServer();
 
 public:

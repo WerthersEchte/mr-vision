@@ -719,10 +719,10 @@ void CameraGui::takeScreenshot( bool aScreenshot ){
 
 void CameraGui::setBorderData(){
 
-    mCamera->mLowerY = mUi->lELeftBorder->text().toInt();
-    mCamera->mUpperY = mUi->lERightBorder->text().toInt();
-    mCamera->mLowerX = mUi->lEUpperBorder->text().toInt();
-    mCamera->mUpperX = mUi->lELowerBorder->text().toInt();
+    mCamera->mLowerX = mUi->lELeftBorder->text().toInt();
+    mCamera->mUpperX = mUi->lERightBorder->text().toInt();
+    mCamera->mUpperY = mUi->lEUpperBorder->text().toInt();
+    mCamera->mLowerY = mUi->lELowerBorder->text().toInt();
     mCamera->mULMultiplier = mUi->lEULOffset->text().toInt();
     mCamera->mLRMultiplier = mUi->lELROffset->text().toInt();
 

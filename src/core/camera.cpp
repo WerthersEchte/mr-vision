@@ -245,9 +245,9 @@ void Camera::calculateBotPositions( const std::vector<DetectedMarker>& aListOfMa
     {
         vBots.append( mrvision::Bot(
                 vMarker.mMarkerId,
-                ((float)(mULMultiplier*(mUpperX - mLowerX)) + vMarker.mMarkerPosition.y - mLowerX) / (mUpperX - mLowerX !=0 ? (2*(mUpperX - mLowerX)) : 1) ,
-                ((float)(mLRMultiplier*(mUpperY - mLowerY)) + vMarker.mMarkerPosition.x - mLowerY) / (mUpperY - mLowerY !=0 ? ((mUpperY - mLowerY)) : 1),
-                vMarker.mMarkerDirection*-1+90) ); //TODO: better
+                ((float)(mLRMultiplier*(mUpperX - mLowerX)) + vMarker.mMarkerPosition.x - mLowerX) / (mUpperX - mLowerX !=0 ? ((mUpperX - mLowerX)) : 1),
+				((float)(mULMultiplier*(mUpperY - mLowerY)) + vMarker.mMarkerPosition.y - mLowerY) / (mUpperY - mLowerY != 0 ? (2 * (mUpperY - mLowerY)) : 1),
+                vMarker.mMarkerDirection*-1) ); //TODO: better
         emit detectedBot(vMarker.mMarkerId);
     }
 

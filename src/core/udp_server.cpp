@@ -29,7 +29,8 @@ UDPServer::UDPServer() :
 	hasToSendData(false),
 	mDataToSend(512),
 	mPort(9050),
-	mPacketTime(20)
+	mPacketTime(20),
+	mLastSend(std::clock())
 {
     try{
         mSocket.open(boost::asio::ip::udp::v4());
@@ -125,13 +126,16 @@ void UDPServer::send_Data( const QList<mrvision::Bot>& mBots ){
 
     if( isRunning() ){
 
+		std::stringstream vDebugData;
+		vDebugData << static_cast<double>(std::clock() - mLastSend)/(static_cast<double>(CLOCKS_PER_SEC)/1000) << ": ";
+
         foreach( mrvision::Bot vBot, mBots ){
 
             mDataToSend.push(vBot);
-
-            std::cout << vBot.getId() << "(" << vBot.getX() << "/" <<  vBot.getY() << ") " << std::endl;
-
+			vDebugData << vBot.getId() << "(" << vBot.getX() << "/" << vBot.getY() << ") ";
         }
+
+		std::cout << vDebugData.str() << std::endl;
     }
 
 }
@@ -187,6 +191,8 @@ void UDPServer::run(){
             vPositionData << vEndDataPackage;
 
             mSocket.send_to(boost::asio::buffer( vPositionData.str().c_str(), vPositionData.str().length() ), sender_endpoint);
+
+			mLastSend = std::clock();
         }
 
         while(((double)(std::clock() - tStart)/CLOCKS_PER_SEC) < (double) mPacketTime/1000 ){ }
