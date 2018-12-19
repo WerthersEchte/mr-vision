@@ -342,30 +342,65 @@ static int gCounter = 0;
 
 bool DetectorSimple::identifyMarker( DetectedMarker& aNotYetFoundMarker ){
 
-    cv::Mat vPart, vColorPart;
-    int width=aNotYetFoundMarker.mMarkerImage.size().width / 5,
-    	height=aNotYetFoundMarker.mMarkerImage.size().height / 5;
+	const auto imsize = 100.0;
+	const auto marker_threshold = 0.25;
 
-    int vInnerWidth = aNotYetFoundMarker.mMarkerImage.size().width - 2*width, vInnerHeight = aNotYetFoundMarker.mMarkerImage.size().height - 2*height;
-    int vBonusWidth = 0, vBonusHeight = 0;
-    if( vInnerWidth % 3 == 2 ){
-        vBonusWidth = 1;
-    }
-    if( vInnerHeight % 3 == 2 ){
-        vBonusHeight = 1;
-    }
+	cv::Mat vResizedImage(imsize, imsize, aNotYetFoundMarker.mMarkerImage.type());
+	cv::resize(aNotYetFoundMarker.mMarkerImage, vResizedImage, vResizedImage.size(), 0, 0, cv::INTER_LINEAR);
 
-    int vPositionWidth[4] = {width, width+vInnerWidth/3+vBonusWidth, width+vInnerWidth-vInnerWidth/3-vBonusWidth, width+vInnerWidth},
-        vPositionHeight[4] = {height, height+vInnerHeight/3+vBonusHeight, height+vInnerHeight-vInnerHeight/3-vBonusHeight, height+vInnerHeight};
+	cv::Mat vBW = vResizedImage > 170;
 
-    for( int i = 0; i < 3; i++){
-    	for( int j = 0; j < 3; j++){
+	cv::Mat canny;
 
-            vPart = aNotYetFoundMarker.mMarkerImage( cv::Rect( vPositionWidth[j], vPositionHeight[i], vPositionWidth[j+1]-vPositionWidth[j], vPositionHeight[i+1]-vPositionHeight[i]) );
-    		aNotYetFoundMarker.mMarker.push_back( countNonZero(vPart)>0 );
+	cv::Canny(vBW, canny, 0, 255);
+	std::vector<std::vector<cv::Point>> contours;
+	cv::findContours(canny, contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
+	std::vector<std::vector<cv::Point>> contours_poly(contours.size());
+	std::vector<cv::Rect> rawBlobs(contours.size());
 
-    	}
-    }
+	for (size_t i = 0; i < contours.size(); i++) {
+		rawBlobs[i] = boundingRect(contours[i]);
+	}
+
+	if (rawBlobs.size() < 1) return false;
+
+	cv::Rect upper_left = rawBlobs[0],
+		lower_left = rawBlobs[0],
+		upper_right = rawBlobs[0],
+		lower_right = rawBlobs[0];
+
+
+	auto euclidean = [](double edge_x, double edge_y, cv::Rect point) {return std::pow((edge_x - point.x), 2.0) + std::pow((edge_y - point.y), 2); };
+
+	for (auto r : rawBlobs) {
+		if (euclidean(0, 0, r) <= euclidean(0, 0, upper_left)) {
+			upper_left = r;
+		}
+		if (euclidean(imsize, 0, r) <= euclidean(imsize, 0, upper_right)) {
+			upper_right = r;
+		}
+		if (euclidean(0, imsize, r) <= euclidean(0, imsize, lower_left)) {
+			lower_left = r;
+		}
+		if (euclidean(imsize, imsize, r) <= euclidean(imsize, imsize, lower_right)) {
+			lower_right = r;
+		}
+
+	}
+
+	cv::Rect imbounds(upper_left.x + upper_left.width, upper_left.y + upper_left.height, upper_right.x - (upper_left.x + upper_left.width), lower_left.y - (upper_left.y + upper_left.height));
+
+	cv::Mat vMarker = vBW(imbounds);
+
+	int width = vMarker.size().width / 3,
+		height = vMarker.size().height / 3;
+
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			cv::Mat vPart = vMarker(cv::Rect(j * width, i * height, width, height));
+			aNotYetFoundMarker.mMarker.push_back(cv::countNonZero(vPart) > (width * height * marker_threshold));
+		}
+	}
 
     int vRotations = 0;
     for( mrvision::Marker vTest : MARKERLIST.getMarker() ){
@@ -373,15 +408,9 @@ bool DetectorSimple::identifyMarker( DetectedMarker& aNotYetFoundMarker ){
             aNotYetFoundMarker.mMarkerDirection += 270 - vRotations*90;
             aNotYetFoundMarker.mMarkerId = vTest.getId();
 
-            //std::string vImagename = "images/marker_" + std::to_string(gImageCounter) + "_" + std::to_string(aNotYetFoundMarker.mMarkerId) + "_" + std::to_string(vRotations) + "_" + std::to_string(gCounter++) + ".png";
-            //cv::imwrite( vImagename, aNotYetFoundMarker.mMarkerImage );
-
 			return true;
 		}
     }
-
-    //std::string vImagename = "images/marker_" + std::to_string(gImageCounter) + "_-1_-1_" + std::to_string(gCounter++) + ".png";
-    //cv::imwrite( vImagename, aNotYetFoundMarker.mMarkerImage );
 
     return false;
 }
