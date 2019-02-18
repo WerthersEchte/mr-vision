@@ -7,7 +7,8 @@ DetectedMarker::DetectedMarker( cv::Mat aMarkerImage, float aMarkerDirection, cv
     mMarkerDirection(aMarkerDirection),
     mMarkerPosition(aMarkerPosition),
     mMarker(),
-    mMarkerId(-1)
+    mMarkerId(-1),
+	mMarkerConfidence(0.0)
 {
 
 }

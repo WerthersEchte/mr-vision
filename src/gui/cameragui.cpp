@@ -1,7 +1,7 @@
 #include "cameragui.h"
 #include "ui_camera.h"
 
-#include "src/core/detectorsimple.h"
+#include "src/core/detectorneural.h"
 #include "src/core/udp_server.h"
 #include "src/core/marker.h"
 #include "src/gui/markergui.h"
@@ -28,7 +28,7 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     QWidget(aParent),
     mUi(new Ui::Camera),
     mCamera(aCamera),
-    mDetector(new DetectorSimple()),
+    mDetector(new DetectorNeural()),
     mKnownMarkers(),
     mActiveInterface(true),
     mTakeScreenshot(false)

@@ -8,6 +8,8 @@ project ( ${MAIN_NAME} CXX )
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
+set(TENSORFLOW "extern/tensorflow") 
+
 find_package( Qt5Widgets REQUIRED )
 find_package( Qt5Core REQUIRED )
 find_package( Qt5Gui REQUIRED )
@@ -21,8 +23,8 @@ set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 FIND_PACKAGE( Boost COMPONENTS system regex REQUIRED )
 
-include_directories( ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "C:/Users/roboticlab/Documents/IC Imaging Control 3.4/classlib/include" )
-LINK_DIRECTORIES("C:/Users/roboticlab/Documents/IC Imaging Control 3.4/classlib/x64" ${Boost_LIBRARY_DIRS})
+include_directories( ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "C:/Users/roboticlab/Documents/IC Imaging Control 3.4/classlib/include" ${TENSORFLOW})
+LINK_DIRECTORIES("C:/Users/roboticlab/Documents/IC Imaging Control 3.4/classlib/x64" ${Boost_LIBRARY_DIRS} ${TENSORFLOW})
 
 set( SOURCE
    ${SOURCE}
@@ -38,6 +40,8 @@ set( SOURCE
    src/core/markerlist.cpp
    src/core/udp_server.cpp
    src/core/detectorsimple.cpp
+   src/core/detectorneural.cpp
+   src/core/neural.cpp
    src/core/detectedmarker.cpp
    src/core/ill/MarkerDetector.cpp
 )
@@ -55,6 +59,8 @@ set( HEADERS
    src/core/udp_server.h
    src/core/detector.h
    src/core/detectorsimple.h
+   src/core/detectorneural.h
+   src/core/neural.h
    src/core/detectedmarker.h
    src/core/ill/MarkerDetector.h
 )
@@ -75,4 +81,4 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_executable( ${MAIN_NAME} WIN32 ${SOURCE} ${HEADERS} ${UI_HEADERS} ${UI_FILES} )
 
 qt5_use_modules( ${MAIN_NAME} Widgets Core Gui )
-target_link_libraries( ${MAIN_NAME} ${OpenCV_LIBS} ${aruco_LIBS} optimized TIS_UDSHL11_x64 debug TIS_UDSHL11d_x64 ${Boost_LIBRARIES} )
+target_link_libraries( ${MAIN_NAME} ${OpenCV_LIBS} ${aruco_LIBS} optimized TIS_UDSHL11_x64 debug TIS_UDSHL11d_x64 ${Boost_LIBRARIES} tensorflow)

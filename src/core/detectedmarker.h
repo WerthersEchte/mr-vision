@@ -16,6 +16,7 @@ public:
 
 
     std::vector<bool> mMarker;
+	float mMarkerConfidence;
     int mMarkerId;
 
     DetectedMarker( cv::Mat aMarkerImage, float aMarkerDirection, cv::Point aMarkerPosition );
