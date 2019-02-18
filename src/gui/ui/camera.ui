@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>818</width>
+    <width>837</width>
     <height>813</height>
    </rect>
   </property>
@@ -577,7 +577,7 @@ margin: 2px;
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QLineEdit" name="lEUpperBorder">
+                      <widget class="QLineEdit" name="lEUpperBorderCamera">
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                          <horstretch>0</horstretch>
@@ -610,10 +610,32 @@ margin: 2px;
                         </size>
                        </property>
                        <property name="text">
-                        <string>Upper</string>
+                        <string>Upper -&gt;</string>
                        </property>
                        <property name="alignment">
-                        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="lEUpperBorderPlayfield">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>55</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="inputMask">
+                        <string/>
+                       </property>
+                       <property name="text">
+                        <string>0.0</string>
                        </property>
                       </widget>
                      </item>
@@ -651,7 +673,7 @@ margin: 2px;
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QLineEdit" name="lELowerBorder">
+                      <widget class="QLineEdit" name="lELowerBorderCamera">
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                          <horstretch>0</horstretch>
@@ -681,10 +703,29 @@ margin: 2px;
                         </size>
                        </property>
                        <property name="text">
-                        <string>Lower</string>
+                        <string>Lower -&gt;</string>
                        </property>
                        <property name="alignment">
-                        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="lELowerBorderPlayfield">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>55</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>0.0</string>
                        </property>
                       </widget>
                      </item>
@@ -721,44 +762,6 @@ margin: 2px;
                      <property name="bottomMargin">
                       <number>0</number>
                      </property>
-                     <item>
-                      <widget class="QLineEdit" name="lEULOffset">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>55</width>
-                         <height>16777215</height>
-                        </size>
-                       </property>
-                       <property name="text">
-                        <string>0</string>
-                       </property>
-                       <property name="alignment">
-                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QLabel" name="label_4">
-                       <property name="minimumSize">
-                        <size>
-                         <width>55</width>
-                         <height>0</height>
-                        </size>
-                       </property>
-                       <property name="text">
-                        <string>Offset *</string>
-                       </property>
-                       <property name="alignment">
-                        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                       </property>
-                      </widget>
-                     </item>
                     </layout>
                    </widget>
                   </item>
@@ -841,7 +844,7 @@ margin: 2px;
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QLineEdit" name="lELeftBorder">
+                      <widget class="QLineEdit" name="lELeftBorderCamera">
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                          <horstretch>0</horstretch>
@@ -871,7 +874,32 @@ margin: 2px;
                         </size>
                        </property>
                        <property name="text">
-                        <string>Left</string>
+                        <string>Left -&gt;</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="lELeftBorderPlayfield">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>55</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="inputMask">
+                        <string/>
+                       </property>
+                       <property name="text">
+                        <string>0.0</string>
                        </property>
                       </widget>
                      </item>
@@ -909,7 +937,7 @@ margin: 2px;
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QLineEdit" name="lERightBorder">
+                      <widget class="QLineEdit" name="lERightBorderCamera">
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                          <horstretch>0</horstretch>
@@ -939,7 +967,29 @@ margin: 2px;
                         </size>
                        </property>
                        <property name="text">
-                        <string>Right</string>
+                        <string>Right -&gt;</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="lERightBorderPlayfield">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>55</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>0.0</string>
                        </property>
                       </widget>
                      </item>
@@ -976,41 +1026,6 @@ margin: 2px;
                      <property name="bottomMargin">
                       <number>0</number>
                      </property>
-                     <item>
-                      <widget class="QLineEdit" name="lELROffset">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>55</width>
-                         <height>16777215</height>
-                        </size>
-                       </property>
-                       <property name="text">
-                        <string>0</string>
-                       </property>
-                       <property name="alignment">
-                        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QLabel" name="label_9">
-                       <property name="minimumSize">
-                        <size>
-                         <width>55</width>
-                         <height>0</height>
-                        </size>
-                       </property>
-                       <property name="text">
-                        <string>* Offset</string>
-                       </property>
-                      </widget>
-                     </item>
                     </layout>
                    </widget>
                   </item>

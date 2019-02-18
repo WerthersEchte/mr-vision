@@ -7,6 +7,8 @@
 
 namespace mrvision {
 
+	class DetectorNeural;
+
 class DetectedMarker {
 
 public:

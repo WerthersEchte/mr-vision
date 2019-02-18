@@ -39,7 +39,8 @@ private:
     bool mIsFetchingVideoframes;
 
 public:
-    int mLowerX, mLowerY, mUpperX, mUpperY, mULMultiplier, mLRMultiplier;
+	double mLowerXCamera, mLowerYCamera, mUpperXCamera, mUpperYCamera;
+	double mLowerXPlayfield, mLowerYPlayfield, mUpperXPlayfield, mUpperYPlayfield;
 
     Camera( DShowLib::Grabber::tVideoCaptureDeviceItem aCameraIdent );
     ~Camera();

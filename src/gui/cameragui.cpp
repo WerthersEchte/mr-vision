@@ -49,16 +49,16 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
 
     QValidator *vValidator = new QIntValidator(std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), this);
 
-    mUi->lELeftBorder->setValidator( vValidator );
-    mUi->lERightBorder->setValidator( vValidator );
-    mUi->lEUpperBorder->setValidator( vValidator );
-    mUi->lELowerBorder->setValidator( vValidator );
+    mUi->lELeftBorderCamera->setValidator( vValidator );
+    mUi->lERightBorderCamera->setValidator( vValidator );
+    mUi->lEUpperBorderCamera->setValidator( vValidator );
+    mUi->lELowerBorderCamera->setValidator( vValidator );
     mUi->lEDALeftBorder->setValidator( vValidator );
     mUi->lEDARightBorder->setValidator( vValidator );
     mUi->lEDAUpperBorder->setValidator( vValidator );
     mUi->lEDALowerBorder->setValidator( vValidator );
-    mUi->lEULOffset->setValidator( vValidator );
-    mUi->lELROffset->setValidator( vValidator );
+    //mUi->lEULOffset->setValidator( vValidator );
+    //mUi->lELROffset->setValidator( vValidator );
 
     mUi->lEScreenshotNumber->setValidator( vValidator );
 
@@ -138,12 +138,15 @@ CameraGui::CameraGui( Camera *aCamera, QWidget *aParent) :
     connect( mUi->lECameraFile, SIGNAL( editingFinished( ) ), this, SLOT( setCameraFile( ) ) );
     connect( mUi->pBLoadCameraConfigFile, SIGNAL( clicked( bool ) ), this, SLOT( selectCameraFile( bool ) ) );
 
-    connect( mUi->lELeftBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
-    connect( mUi->lERightBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
-    connect( mUi->lEUpperBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
-    connect( mUi->lELowerBorder, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
-    connect( mUi->lEULOffset, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
-    connect( mUi->lELROffset, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+    connect( mUi->lELeftBorderCamera, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+    connect( mUi->lERightBorderCamera, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+    connect( mUi->lEUpperBorderCamera, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+    connect( mUi->lELowerBorderCamera, SIGNAL( editingFinished( ) ), this, SLOT( setBorderData( ) ) );
+	connect(mUi->lELeftBorderPlayfield, SIGNAL(editingFinished()), this, SLOT(setBorderData()));
+	connect(mUi->lERightBorderPlayfield, SIGNAL(editingFinished()), this, SLOT(setBorderData()));
+	connect(mUi->lEUpperBorderPlayfield, SIGNAL(editingFinished()), this, SLOT(setBorderData()));
+	connect(mUi->lELowerBorderPlayfield, SIGNAL(editingFinished()), this, SLOT(setBorderData()));
+
 
     MarkerList vMarkerList;
     int vPosition = 0;
@@ -232,12 +235,15 @@ void CameraGui::saveCameraGuiConfig( bool aDummy )
     vDetectionConfigData["MarkerSize"] = mUi->lEMarkerSize->text();
     vDetectionConfigData["Threshold"] = mUi->lEThreshold->text();
 
-    vBorders["ULBorderUpper"] = mUi->lEUpperBorder->text();
-    vBorders["ULBorderLower"] = mUi->lELowerBorder->text();
-    vBorders["ULBorderOffset"] = mUi->lEULOffset->text();
-    vBorders["LRBorderLeft"] = mUi->lELeftBorder->text();
-    vBorders["LRBorderRight"] = mUi->lERightBorder->text();
-    vBorders["LRBorderOffset"] = mUi->lELROffset->text();
+    vBorders["ULBorderUpper"] = mUi->lEUpperBorderCamera->text();
+    vBorders["ULBorderLower"] = mUi->lELowerBorderCamera->text();
+    vBorders["LRBorderLeft"] = mUi->lELeftBorderCamera->text();
+    vBorders["LRBorderRight"] = mUi->lERightBorderCamera->text();
+	vBorders["ULBorderUpperPlayfield"] = mUi->lEUpperBorderPlayfield->text();
+	vBorders["ULBorderLowerPlayfield"] = mUi->lELowerBorderPlayfield->text();
+	vBorders["LRBorderLeftPlayfield"] = mUi->lELeftBorderPlayfield->text();
+	vBorders["LRBorderRightPlayfield"] = mUi->lERightBorderPlayfield->text();
+
     vBorders["DetectionAreaUpperBorder"] = mUi->lEDAUpperBorder->text();
     vBorders["DetectionAreaLowerBorder"] = mUi->lEDALowerBorder->text();
     vBorders["DetectionAreaRightBorder"] = mUi->lEDARightBorder->text();
@@ -296,12 +302,16 @@ void CameraGui::loadCameraGuiConfig( bool aDummy )
     setThreshold();
     setMarkerSize();
 
-    mUi->lEUpperBorder->setText( vBorders["ULBorderUpper"].toString() );
-    mUi->lELowerBorder->setText( vBorders["ULBorderLower"].toString() );
-    mUi->lEULOffset->setText( vBorders["ULBorderOffset"].toString() );
-    mUi->lELeftBorder->setText( vBorders["LRBorderLeft"].toString() );
-    mUi->lERightBorder->setText( vBorders["LRBorderRight"].toString() );
-    mUi->lELROffset->setText( vBorders["LRBorderOffset"].toString() );
+    mUi->lEUpperBorderCamera->setText( vBorders["ULBorderUpper"].toString() );
+    mUi->lELowerBorderCamera->setText( vBorders["ULBorderLower"].toString() );
+    mUi->lELeftBorderCamera->setText( vBorders["LRBorderLeft"].toString() );
+    mUi->lERightBorderCamera->setText( vBorders["LRBorderRight"].toString() );
+
+	mUi->lEUpperBorderPlayfield->setText(vBorders["ULBorderUpperPlayfield"].toString());
+	mUi->lELowerBorderPlayfield->setText(vBorders["ULBorderLowerPlayfield"].toString());
+	mUi->lELeftBorderPlayfield->setText(vBorders["LRBorderLeftPlayfield"].toString());
+	mUi->lERightBorderPlayfield->setText(vBorders["LRBorderRightPlayfield"].toString());
+
     mUi->lEDAUpperBorder->setText( vBorders["DetectionAreaUpperBorder"].toString() );
     mUi->lEDALowerBorder->setText( vBorders["DetectionAreaLowerBorder"].toString() );
     mUi->lEDARightBorder->setText( vBorders["DetectionAreaRightBorder"].toString() );
@@ -660,10 +670,10 @@ void CameraGui::createPictureFromVideoframe( const cv::Mat& aVideoFrame ){
 
             QPainter painter( &vPixmap );
             painter.setPen( LinePenYellow );
-            painter.drawLine(0, mUi->lEUpperBorder->text().toInt() ,vPixmap.width(), mUi->lEUpperBorder->text().toInt() );
-            painter.drawLine(0, mUi->lELowerBorder->text().toInt() ,vPixmap.width(), mUi->lELowerBorder->text().toInt() );
-            painter.drawLine(mUi->lELeftBorder->text().toInt() , 0,mUi->lELeftBorder->text().toInt() , vPixmap.height() );
-            painter.drawLine(mUi->lERightBorder->text().toInt() , 0,mUi->lERightBorder->text().toInt() , vPixmap.height() );
+            painter.drawLine(0, mUi->lEUpperBorderCamera->text().toInt() ,vPixmap.width(), mUi->lEUpperBorderCamera->text().toInt() );
+            painter.drawLine(0, mUi->lELowerBorderCamera->text().toInt() ,vPixmap.width(), mUi->lELowerBorderCamera->text().toInt() );
+            painter.drawLine(mUi->lELeftBorderCamera->text().toInt() , 0,mUi->lELeftBorderCamera->text().toInt() , vPixmap.height() );
+            painter.drawLine(mUi->lERightBorderCamera->text().toInt() , 0,mUi->lERightBorderCamera->text().toInt() , vPixmap.height() );
             painter.setPen( LinePenWhite );
             painter.fillRect(0, 0,vPixmap.width(), mUi->lEDAUpperBorder->text().toInt(), Qt::SolidPattern );
             painter.fillRect(0, 0, mUi->lEDALeftBorder->text().toInt(), vPixmap.height(), Qt::SolidPattern );
@@ -719,12 +729,15 @@ void CameraGui::takeScreenshot( bool aScreenshot ){
 
 void CameraGui::setBorderData(){
 
-    mCamera->mLowerX = mUi->lELeftBorder->text().toInt();
-    mCamera->mUpperX = mUi->lERightBorder->text().toInt();
-    mCamera->mUpperY = mUi->lEUpperBorder->text().toInt();
-    mCamera->mLowerY = mUi->lELowerBorder->text().toInt();
-    mCamera->mULMultiplier = mUi->lEULOffset->text().toInt();
-    mCamera->mLRMultiplier = mUi->lELROffset->text().toInt();
+    mCamera->mLowerXCamera = mUi->lELeftBorderCamera->text().toInt();
+    mCamera->mUpperXCamera = mUi->lERightBorderCamera->text().toInt();
+    mCamera->mUpperYCamera = mUi->lEUpperBorderCamera->text().toInt();
+    mCamera->mLowerYCamera = mUi->lELowerBorderCamera->text().toInt();
+
+	mCamera->mLowerXPlayfield = mUi->lELeftBorderPlayfield->text().toDouble();
+	mCamera->mUpperXPlayfield = mUi->lERightBorderPlayfield->text().toDouble();
+	mCamera->mUpperYPlayfield = mUi->lEUpperBorderPlayfield->text().toDouble();
+	mCamera->mLowerYPlayfield = mUi->lELowerBorderPlayfield->text().toDouble();
 
     mDetector->setDetectionArea( mUi->lEDALeftBorder->text().toInt(), mUi->lEDARightBorder->text().toInt(), mUi->lEDAUpperBorder->text().toInt(), mUi->lEDALowerBorder->text().toInt() );
 

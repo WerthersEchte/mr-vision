@@ -49,6 +49,8 @@ DetectorSimple::~DetectorSimple(){}
 
 static double gImageCounter = 0, gFoundRectCounter = 0, gFoundMarkerCounter = 0;
 
+int vCounterIm = 0;
+
 void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
 
     std::vector<DetectedMarker> vFoundMarkers;
@@ -72,6 +74,11 @@ void DetectorSimple::detectingMarkerInImage( const cv::Mat& aImage ){
         isRunning = false;
         return;
     }
+
+
+	std::stringstream vImName;
+	vImName << "image" << vCounterIm++ << ".png";
+	cv::imwrite(vImName.str(), aImage);
 
     while( !mPoints.empty() ){
         mCounterI = 0;

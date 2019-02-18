@@ -9,6 +9,7 @@
 #include <fstream>
 
 #include <QtConcurrent/QtConcurrent>
+#include <QMutex>
 #include "opencv2/opencv.hpp"
 
 namespace mrvision {
@@ -28,7 +29,7 @@ namespace mrvision {
 		return modelvar;
 	}
 
-	int handleError(int status, const char* func_name,
+	int handleNeuralError(int status, const char* func_name,
 		const char* err_msg, const char* file_name,
 		int line, void* userdata)
 	{
@@ -57,7 +58,7 @@ namespace mrvision {
 	{
 
 		qRegisterMetaType< cv::Mat >("cv::Mat");
-		cv::redirectError(handleError);
+		cv::redirectError(handleNeuralError);
 
 		//connect( &mDetector, SIGNAL( showMarkerAndImage( cv::Mat, QList<bool> ) ), this, SLOT( blahMarkerAndImage( cv::Mat, QList<bool> ) ) );
 
@@ -258,15 +259,9 @@ namespace mrvision {
 
 				DetectedMarker vUnDetectedMarker(vMarkerImage, vRotationBox.angle, vRotationBox.center);
 
-				cv::Point2f vertices[4];
-				vRotationBox.points(vertices);
-				for (int i = 0; i < 4; i++)
-					cv::line(outputImage, vertices[i], vertices[(i + 1) % 4], cv::Scalar(0, 255, 0), 1);
-
-				cv::imshow("Marker", vMarkerImage);
 
 				if (identifyMarker(vUnDetectedMarker)) {
-					std::cout << "Marker identified: " << vUnDetectedMarker.mMarkerId << std::endl;//vFoundMarkers.push_back(vUnDetectedMarker);
+					//std::cout << "Marker identified: " << vUnDetectedMarker.mMarkerId << std::endl;//vFoundMarkers.push_back(vUnDetectedMarker);
 					markerFound = true;
 					vFoundMarkers.push_back(vUnDetectedMarker);
 				}
@@ -322,6 +317,7 @@ namespace mrvision {
 	}
 
 	static int gCounter = 0;
+	static QMutex gpu_lock;
 
 	bool DetectorNeural::identifyMarker(DetectedMarker& aNotYetFoundMarker) {
 		try {
@@ -355,17 +351,20 @@ namespace mrvision {
 			TF_Output outputs[1] = { model.output };
 			TF_Tensor* output_values[1] = { NULL };
 
+			gpu_lock.lock();
 			TF_SessionRun(model.session, //Session
 				NULL, //Run options
 				inputs /*input tensor*/, input_values /*input values*/, 1 /*ninputs*/,
 				outputs /*output tensor*/, output_values /*output values*/, 1 /*noutputs*/,
 				/* No target operations to run */
 				NULL /*target operations*/, 0 /*number of targets*/, NULL /*run metadata*/, model.status /*output status*/);
+			gpu_lock.unlock();
 			TF_DeleteTensor(t);
 			if (!Okay(model.status)) return false;
 			float* predictions = (float*)malloc(sizeof(float) * 16);
 			memcpy(predictions, TF_TensorData(output_values[0]), sizeof(float) * 16);
 			TF_DeleteTensor(output_values[0]);
+
 
 			char* ids[] = { "7", "8", "9", "10" };
 			char* dirs[] = { "up  ", "down", "left", "right" };
@@ -381,7 +380,6 @@ namespace mrvision {
 				}
 			}
 			free(predictions);
-			std::cout << std::endl;
 			return found;
 		}
 		catch (const std::exception& e) {

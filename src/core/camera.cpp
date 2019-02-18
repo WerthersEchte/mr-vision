@@ -243,12 +243,14 @@ void Camera::calculateBotPositions( const std::vector<DetectedMarker>& aListOfMa
 
     for( DetectedMarker vMarker : aListOfMarkers )
     {
-        vBots.append( mrvision::Bot(
-                vMarker.mMarkerId,
-                ((float)(mLRMultiplier*(mUpperX - mLowerX)) + vMarker.mMarkerPosition.x - mLowerX) / (mUpperX - mLowerX !=0 ? ((mUpperX - mLowerX)) : 1),
-				((float)(mULMultiplier*(mUpperY - mLowerY)) + vMarker.mMarkerPosition.y - mLowerY) / (mUpperY - mLowerY != 0 ? (2 * (mUpperY - mLowerY)) : 1),
-                vMarker.mMarkerDirection*-1) ); //TODO: better
+		vBots.append(mrvision::Bot(
+			vMarker.mMarkerId,
+			(((static_cast<double>(vMarker.mMarkerPosition.x) - mLowerXCamera) / (mUpperXCamera - mLowerXCamera) * (mUpperXPlayfield - mLowerXPlayfield)) + mLowerXPlayfield),
+			(((static_cast<double>(vMarker.mMarkerPosition.y) - mLowerYCamera) / (mUpperYCamera - mLowerYCamera) * (mUpperYPlayfield - mLowerYPlayfield)) + mLowerYPlayfield),
+            vMarker.mMarkerDirection*-1 )); //TODO: better
         emit detectedBot(vMarker.mMarkerId);
+
+		std::cout << "Position:  " << vMarker.mMarkerPosition.x << " | " << vMarker.mMarkerPosition.y << " Bot: " << vBots.last().getX() << " | " << vBots.last().getY() << std::endl;
     }
 
     emit decodedBotPositions( vBots );

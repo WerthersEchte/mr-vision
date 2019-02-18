@@ -14,8 +14,6 @@
 
 namespace mrvision {
 
-	static MarkerList MARKERLIST;
-
 	class DetectorNeural : public Detector {
 
 		Q_OBJECT

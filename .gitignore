@@ -13,3 +13,5 @@
 *.a
 
 build/
+/extern
+/extra libs

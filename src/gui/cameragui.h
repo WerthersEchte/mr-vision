@@ -24,7 +24,7 @@ class CameraGui : public QWidget
 
 	Ui::Camera *mUi;
 	Camera* mCamera;
-	DetectorSimple* mDetector;
+	DetectorNeural* mDetector;
 
 	QList<MarkerGui*> mKnownMarkers;
 	std::vector<DetectedMarker> mListOfMarkers;
